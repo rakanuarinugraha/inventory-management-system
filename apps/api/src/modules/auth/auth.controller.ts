@@ -5,6 +5,8 @@ import {
   loginSchema,
   refreshTokenSchema,
   updateUserSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from "./auth.schema";
 
 const service = new AuthService();
@@ -85,6 +87,26 @@ export class AuthController {
       const id = req.params.id as string;
       const user = await service.deactivateUser(id);
       res.json({ message: "User deactivated successfully", user });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = forgotPasswordSchema.parse(req.body);
+      const result = await service.forgotPassword(email);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { token, newPassword } = resetPasswordSchema.parse(req.body);
+      const result = await service.resetPassword(token, newPassword);
+      res.json(result);
     } catch (error) {
       next(error);
     }

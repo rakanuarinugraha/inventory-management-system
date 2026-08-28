@@ -72,4 +72,28 @@ export class AuthRepository {
       where: { expiresAt: { lt: new Date() } },
     });
   }
+
+  async createPasswordReset(userId: string, token: string, expiresAt: Date) {
+    return prisma.passwordReset.create({
+      data: { userId, token, expiresAt },
+    });
+  }
+
+  async findPasswordReset(token: string) {
+    return prisma.passwordReset.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+  }
+
+  async deletePasswordReset(token: string) {
+    return prisma.passwordReset.delete({ where: { token } });
+  }
+
+  async updatePassword(userId: string, passwordHash: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
 }

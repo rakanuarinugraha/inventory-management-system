@@ -125,6 +125,39 @@ export class AuthService {
     return userWithoutPassword;
   }
 
+  async forgotPassword(email: string) {
+    const user = await this.repo.findUserByEmail(email);
+    if (!user) {
+      return { message: "If the email exists, a reset link has been sent" };
+    }
+
+    const token = crypto.randomBytes(40).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+    await this.repo.createPasswordReset(user.id, token, expiresAt);
+
+    return { message: "If the email exists, a reset link has been sent", resetToken: token };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const stored = await this.repo.findPasswordReset(token);
+    if (!stored) {
+      throw new AppError("Invalid or expired reset token", 400);
+    }
+
+    if (new Date() > stored.expiresAt) {
+      await this.repo.deletePasswordReset(token);
+      throw new AppError("Reset token expired", 400);
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.repo.updatePassword(stored.userId, passwordHash);
+    await this.repo.deletePasswordReset(token);
+
+    return { message: "Password reset successfully" };
+  }
+
   private generateAccessToken(userId: string, role: string) {
     return jwt.sign({ userId, role }, this.jwtSecret, {
       expiresIn: ACCESS_TOKEN_EXPIRY,
