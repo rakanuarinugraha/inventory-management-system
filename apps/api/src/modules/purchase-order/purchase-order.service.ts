@@ -43,6 +43,7 @@ export class PurchaseOrderService {
     const allowedTransitions: Record<string, string[]> = {
       DRAFT: ["SUBMITTED", "CANCELLED"],
       SUBMITTED: ["CANCELLED"],
+      PARTIALLY_RECEIVED: ["CANCELLED"],
     };
 
     const allowed = allowedTransitions[po.status];

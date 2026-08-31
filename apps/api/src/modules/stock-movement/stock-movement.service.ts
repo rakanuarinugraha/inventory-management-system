@@ -28,9 +28,9 @@ export class StockMovementService {
     if (!po) {
       throw new AppError("Purchase order not found", 404);
     }
-    if (po.status === "COMPLETED" || po.status === "CANCELLED") {
+    if (po.status !== "SUBMITTED" && po.status !== "PARTIALLY_RECEIVED") {
       throw new AppError(
-        "Cannot receive goods against a completed or cancelled PO",
+        `Cannot receive goods against a PO with status ${po.status}`,
         400
       );
     }

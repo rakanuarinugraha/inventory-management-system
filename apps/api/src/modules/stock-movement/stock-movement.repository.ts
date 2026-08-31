@@ -52,8 +52,8 @@ export class StockMovementRepository {
           const allFullyReceived = po.items.every(
             (item) => item.qtyReceived >= item.qtyOrdered
           );
-          const anyPartiallyReceived = po.items.some(
-            (item) => item.qtyReceived > 0 && item.qtyReceived < item.qtyOrdered
+          const someReceived = po.items.some(
+            (item) => item.qtyReceived > 0
           );
 
           if (allFullyReceived) {
@@ -61,7 +61,7 @@ export class StockMovementRepository {
               where: { id: data.poId },
               data: { status: "COMPLETED" },
             });
-          } else if (anyPartiallyReceived) {
+          } else if (someReceived) {
             await tx.purchaseOrder.update({
               where: { id: data.poId },
               data: { status: "PARTIALLY_RECEIVED" },
