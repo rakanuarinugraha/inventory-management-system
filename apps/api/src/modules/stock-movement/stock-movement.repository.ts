@@ -1,4 +1,5 @@
 import prisma from "../../lib/prisma";
+import { stockCalculator } from "../../lib/stock-calculator";
 import {
   StockInInput,
   StockOutInput,
@@ -138,28 +139,7 @@ export class StockMovementRepository {
   }
 
   async getCurrentStock(productId: string, warehouseId: string) {
-    const result = await prisma.stockMovement.aggregate({
-      where: {
-        productId,
-        warehouseId,
-        type: { in: ["IN", "TRANSFER_IN", "ADJUSTMENT_IN"] },
-      },
-      _sum: { quantity: true },
-    });
-
-    const outbound = await prisma.stockMovement.aggregate({
-      where: {
-        productId,
-        warehouseId,
-        type: { in: ["OUT", "TRANSFER_OUT", "ADJUSTMENT_OUT"] },
-      },
-      _sum: { quantity: true },
-    });
-
-    const incoming = result._sum.quantity ?? 0;
-    const outgoing = outbound._sum.quantity ?? 0;
-
-    return incoming - outgoing;
+    return stockCalculator.getCurrentStock(productId, warehouseId);
   }
 
   async getStockByProductAndWarehouse(productId: string) {

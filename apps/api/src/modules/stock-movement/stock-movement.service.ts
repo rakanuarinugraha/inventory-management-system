@@ -1,5 +1,6 @@
 import { StockMovementRepository } from "./stock-movement.repository";
 import { PurchaseOrderRepository } from "../purchase-order/purchase-order.repository";
+import { DashboardService } from "../dashboard/dashboard.service";
 import {
   StockInInput,
   StockOutInput,
@@ -21,6 +22,15 @@ class AppError extends Error {
 export class StockMovementService {
   private repo = new StockMovementRepository();
   private poRepo = new PurchaseOrderRepository();
+  private dashboardService = new DashboardService();
+
+  private async invalidateDashboardCache(): Promise<void> {
+    try {
+      await this.dashboardService.invalidateCache();
+    } catch {
+      // Cache invalidation failure should not block the operation
+    }
+  }
 
   async stockIn(data: StockInInput, createdBy: string) {
     // Validate PO exists and is not completed/cancelled
@@ -53,7 +63,9 @@ export class StockMovementService {
       );
     }
 
-    return this.repo.createStockIn(data, createdBy);
+    const result = await this.repo.createStockIn(data, createdBy);
+    await this.invalidateDashboardCache();
+    return result;
   }
 
   async stockOut(data: StockOutInput, createdBy: string) {
@@ -83,6 +95,7 @@ export class StockMovementService {
     }
 
     const movement = await this.repo.createStockOut(data, createdBy);
+    await this.invalidateDashboardCache();
 
     const resultingStock = currentStock - data.quantity;
     const warning =
@@ -126,7 +139,9 @@ export class StockMovementService {
       );
     }
 
-    return this.repo.createTransfer(data, createdBy);
+    const result = await this.repo.createTransfer(data, createdBy);
+    await this.invalidateDashboardCache();
+    return result;
   }
 
   async getCurrentStock(productId: string, warehouseId: string) {

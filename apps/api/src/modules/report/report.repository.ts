@@ -1,4 +1,5 @@
 import prisma from "../../lib/prisma";
+import { stockCalculator } from "../../lib/stock-calculator";
 import { StockMovementReportQuery } from "./report.schema";
 
 interface ProductMovementAgg {
@@ -8,6 +9,16 @@ interface ProductMovementAgg {
   categoryName: string;
   totalQuantityOut: number;
   movementCount: number;
+}
+
+interface StockExportRow {
+  sku: string;
+  productName: string;
+  category: string;
+  warehouse: string;
+  currentStock: number;
+  unit: string;
+  reorderPoint: number;
 }
 
 export class ReportRepository {
@@ -62,5 +73,80 @@ export class ReportRepository {
         movementCount: r._count.id,
       };
     });
+  }
+
+  async getStockExportData(): Promise<StockExportRow[]> {
+    const stockMap = await stockCalculator.getAllStockByProductWarehouse();
+
+    if (stockMap.size === 0) {
+      return [];
+    }
+
+    // Collect unique product and warehouse IDs
+    const productIds = new Set<string>();
+    const warehouseIds = new Set<string>();
+
+    for (const key of stockMap.keys()) {
+      const [productId, warehouseId] = key.split(":");
+      productIds.add(productId);
+      warehouseIds.add(warehouseId);
+    }
+
+    const [products, warehouses] = await Promise.all([
+      prisma.product.findMany({
+        where: { id: { in: [...productIds] } },
+        select: {
+          id: true,
+          sku: true,
+          name: true,
+          unit: true,
+          reorderPoint: true,
+          category: { select: { name: true } },
+        },
+      }),
+      prisma.warehouse.findMany({
+        where: { id: { in: [...warehouseIds] } },
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    const productMap = new Map(
+      products.map((p) => [
+        p.id,
+        {
+          sku: p.sku,
+          name: p.name,
+          unit: p.unit,
+          reorderPoint: p.reorderPoint,
+          category: p.category.name,
+        },
+      ])
+    );
+
+    const warehouseMap = new Map(warehouses.map((w) => [w.id, w.name]));
+
+    const rows: StockExportRow[] = [];
+
+    for (const [key, qty] of stockMap.entries()) {
+      const [productId, warehouseId] = key.split(":");
+      const product = productMap.get(productId);
+      const warehouse = warehouseMap.get(warehouseId);
+
+      if (product && warehouse) {
+        rows.push({
+          sku: product.sku,
+          productName: product.name,
+          category: product.category,
+          warehouse,
+          currentStock: qty,
+          unit: product.unit,
+          reorderPoint: product.reorderPoint,
+        });
+      }
+    }
+
+    rows.sort((a, b) => a.sku.localeCompare(b.sku));
+
+    return rows;
   }
 }

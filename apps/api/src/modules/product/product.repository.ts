@@ -1,4 +1,5 @@
 import prisma from "../../lib/prisma";
+import { stockCalculator } from "../../lib/stock-calculator";
 import { CreateProductInput, UpdateProductInput } from "./product.schema";
 
 export class ProductRepository {
@@ -55,23 +56,7 @@ export class ProductRepository {
   }
 
   async findSuggestedReorder() {
-    const movements = await prisma.stockMovement.groupBy({
-      by: ["productId", "type"],
-      _sum: { quantity: true },
-      where: { product: { isActive: true } },
-    });
-
-    const stockMap: Record<string, number> = {};
-    const inboundTypes = ["IN", "TRANSFER_IN", "ADJUSTMENT_IN"];
-
-    for (const m of movements) {
-      const current = stockMap[m.productId] || 0;
-      if (inboundTypes.includes(m.type)) {
-        stockMap[m.productId] = current + (m._sum.quantity ?? 0);
-      } else {
-        stockMap[m.productId] = current - (m._sum.quantity ?? 0);
-      }
-    }
+    const stockByProduct = await stockCalculator.getAllStockByProduct();
 
     const products = await prisma.product.findMany({
       where: { isActive: true },
@@ -80,10 +65,10 @@ export class ProductRepository {
     });
 
     return products
-      .filter((p) => (stockMap[p.id] || 0) <= p.reorderPoint)
+      .filter((p) => (stockByProduct.get(p.id) ?? 0) <= p.reorderPoint)
       .map((p) => ({
         ...p,
-        currentStock: stockMap[p.id] || 0,
+        currentStock: stockByProduct.get(p.id) ?? 0,
       }));
   }
 }

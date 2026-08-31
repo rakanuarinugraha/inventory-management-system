@@ -86,4 +86,43 @@ export class ReportService {
       items,
     };
   }
+
+  async getStockExportCsv(): Promise<string> {
+    const rows = await this.repo.getStockExportData();
+
+    const headers = [
+      "SKU",
+      "Product Name",
+      "Category",
+      "Warehouse",
+      "Current Stock",
+      "Unit",
+      "Reorder Point",
+    ];
+
+    const escapeCsv = (value: string | number): string => {
+      const str = String(value);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const csvRows = [
+      headers.join(","),
+      ...rows.map((row) =>
+        [
+          escapeCsv(row.sku),
+          escapeCsv(row.productName),
+          escapeCsv(row.category),
+          escapeCsv(row.warehouse),
+          row.currentStock,
+          escapeCsv(row.unit),
+          row.reorderPoint,
+        ].join(",")
+      ),
+    ];
+
+    return csvRows.join("\n");
+  }
 }

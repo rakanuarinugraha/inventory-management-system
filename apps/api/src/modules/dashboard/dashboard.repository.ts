@@ -1,27 +1,13 @@
 import prisma from "../../lib/prisma";
+import { stockCalculator } from "../../lib/stock-calculator";
 
 export class DashboardRepository {
   async getTotalInventoryValue() {
-    const movements = await prisma.stockMovement.groupBy({
-      by: ["productId", "type"],
-      _sum: { quantity: true },
-    });
+    const stockByProduct = await stockCalculator.getAllStockByProduct();
 
-    const stockByProduct: Record<string, number> = {};
-    const inboundTypes = ["IN", "TRANSFER_IN", "ADJUSTMENT_IN"];
-
-    for (const m of movements) {
-      const current = stockByProduct[m.productId] || 0;
-      if (inboundTypes.includes(m.type)) {
-        stockByProduct[m.productId] = current + (m._sum.quantity ?? 0);
-      } else {
-        stockByProduct[m.productId] = current - (m._sum.quantity ?? 0);
-      }
-    }
-
-    const productIds = Object.keys(stockByProduct).filter(
-      (id) => stockByProduct[id] > 0
-    );
+    const productIds = [...stockByProduct.entries()]
+      .filter(([, qty]) => qty > 0)
+      .map(([id]) => id);
 
     if (productIds.length === 0) {
       return { totalValue: 0, productCount: 0 };
@@ -47,7 +33,7 @@ export class DashboardRepository {
 
     let totalValue = 0;
     for (const productId of productIds) {
-      const qty = stockByProduct[productId] || 0;
+      const qty = stockByProduct.get(productId) ?? 0;
       const price = priceMap[productId] || 0;
       totalValue += qty * price;
     }
@@ -56,23 +42,7 @@ export class DashboardRepository {
   }
 
   async getLowStockCount() {
-    const movements = await prisma.stockMovement.groupBy({
-      by: ["productId", "type"],
-      _sum: { quantity: true },
-      where: { product: { isActive: true } },
-    });
-
-    const stockMap: Record<string, number> = {};
-    const inboundTypes = ["IN", "TRANSFER_IN", "ADJUSTMENT_IN"];
-
-    for (const m of movements) {
-      const current = stockMap[m.productId] || 0;
-      if (inboundTypes.includes(m.type)) {
-        stockMap[m.productId] = current + (m._sum.quantity ?? 0);
-      } else {
-        stockMap[m.productId] = current - (m._sum.quantity ?? 0);
-      }
-    }
+    const stockByProduct = await stockCalculator.getAllStockByProduct();
 
     const products = await prisma.product.findMany({
       where: { isActive: true },
@@ -80,7 +50,7 @@ export class DashboardRepository {
     });
 
     const lowStockCount = products.filter(
-      (p) => (stockMap[p.id] || 0) <= p.reorderPoint
+      (p) => (stockByProduct.get(p.id) ?? 0) <= p.reorderPoint
     ).length;
 
     return { lowStockCount };

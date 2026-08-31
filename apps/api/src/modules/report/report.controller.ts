@@ -18,4 +18,23 @@ export class ReportController {
       next(error);
     }
   }
+
+  static async exportStockReportCsv(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const csv = await service.getStockExportCsv();
+      const timestamp = new Date().toISOString().split("T")[0];
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="stock-report-${timestamp}.csv"`
+      );
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.send(csv);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

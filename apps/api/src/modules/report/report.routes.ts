@@ -13,4 +13,10 @@ router.get(
   ReportController.getMovingItemsReport
 );
 
+router.get(
+  "/stock-export",
+  authorize("ADMIN"),
+  ReportController.exportStockReportCsv
+);
+
 export default router;
