@@ -8,6 +8,7 @@ import supplierRoutes from "./modules/supplier/supplier.routes";
 import purchaseOrderRoutes from "./modules/purchase-order/purchase-order.routes";
 import stockMovementRoutes from "./modules/stock-movement/stock-movement.routes";
 import stockOpnameRoutes from "./modules/stock-opname/stock-opname.routes";
+import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import { errorHandler } from "./middlewares/error.middleware";
 
 const app = express();
@@ -24,6 +25,7 @@ app.use("/api/suppliers", supplierRoutes);
 app.use("/api/purchase-orders", purchaseOrderRoutes);
 app.use("/api/stock-movements", stockMovementRoutes);
 app.use("/api/stock-opnames", stockOpnameRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
