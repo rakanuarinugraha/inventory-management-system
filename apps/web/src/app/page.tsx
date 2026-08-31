@@ -1,17 +1,22 @@
-import { Button } from "@/components/ui/button";
+"use client";
 
-export default function Home() {
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+
+export default function HomePage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading) {
+      router.replace(isAuthenticated ? "/dashboard" : "/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-8">
-      <main className="flex flex-col items-center gap-6 text-center max-w-md">
-        <h1 className="text-4xl font-bold tracking-tight">
-          Inventory Management System
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Track stock, manage warehouses, and streamline operations.
-        </p>
-        <Button size="lg">Get Started</Button>
-      </main>
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
     </div>
   );
 }

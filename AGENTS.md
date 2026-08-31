@@ -47,6 +47,8 @@ Backend layered architecture per module (`apps/api/src/modules/<feature>/`):
 Shared middleware (`apps/api/src/middlewares/`): auth, role-based access, centralized error handling.
 Shared libs (`apps/api/src/lib/`): Prisma client, Redis client.
 
+Frontend structure (`apps/web/`): shared layout shell (sidebar + topbar) and reusable components — see `docs/UI-UX-SPEC.md` for the full pattern.
+
 ## Commands
 
 ```
@@ -79,6 +81,8 @@ DB studio:       cd apps/api && npx prisma studio
 - **Roles**: `ADMIN`, `MANAGER`, `STAFF`. Authorization enforced at the API level, not just the UI.
 - **PO statuses**: `DRAFT -> SUBMITTED -> PARTIALLY_RECEIVED -> COMPLETED -> CANCELLED`. Auto-updates when goods are received.
 - **Validation**: Zod on frontend, class-validator on backend. All list endpoints require pagination.
+- **Frontend theme**: Dark mode only (no light mode/toggle for v1), green as primary color. Tokens defined in `docs/UI-UX-SPEC.md` section 1 — do not hardcode hex colors in components.
+- **Frontend pages must reuse shared components** (`DataTable`, `PageHeader`, `FormDialog`, `StatusBadge`, etc.) defined in `docs/UI-UX-SPEC.md` section 4, not reimplement per-page equivalents.
 
 ## Edit / Safety Boundaries
 
@@ -102,7 +106,7 @@ After modifying frontend:
 ## Operating Rules
 
 1. **Investigate before guessing.** Resolve uncertainties from code, tests, config, or this PRD rather than inventing answers.
-2. **Follow the module pattern.** Every backend feature goes in `apps/api/src/modules/<feature>/` with routes -> controller -> service -> repository.
+2. **Follow the module pattern.** Every backend feature goes in `apps/api/src/modules/<feature>/` with routes -> controller -> service -> repository. Frontend pages reuse the shared layout shell and components defined in `docs/UI-UX-SPEC.md` rather than rebuilding navigation or common UI patterns per page.
 3. **Work one User Story at a time.** Reference PRD user stories (US-X.Y) for scope. One story = one focused task.
 4. **Make the smallest correct change.** No unrelated cleanup unless required for correctness.
 5. **Verify the result.** Run relevant tests/checks before declaring completion.
@@ -110,4 +114,5 @@ After modifying frontend:
 ## Documentation Pointers
 
 - Full PRD (requirements, data model, user stories): `docs/PRD-Inventory-Management-System-EN.md`
+- UI/UX Spec (frontend layout, components, design tokens): `docs/UI-UX-SPEC.md`
 - Project initialization guide: `docs/init-PROJECT.md`
