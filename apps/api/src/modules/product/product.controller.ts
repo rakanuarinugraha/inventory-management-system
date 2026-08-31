@@ -54,4 +54,13 @@ export class ProductController {
       next(error);
     }
   }
+
+  static async getSuggestedReorder(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const products = await service.getSuggestedReorder();
+      res.json({ products });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

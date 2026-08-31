@@ -59,4 +59,8 @@ export class ProductService {
 
     return this.repo.softDelete(id);
   }
+
+  async getSuggestedReorder() {
+    return this.repo.findSuggestedReorder();
+  }
 }

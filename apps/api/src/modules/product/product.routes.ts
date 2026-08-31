@@ -8,6 +8,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", ProductController.getAll);
+router.get("/suggested-reorder", authorize("ADMIN", "MANAGER"), ProductController.getSuggestedReorder);
 router.get("/:id", ProductController.getById);
 
 // Admin-only routes
