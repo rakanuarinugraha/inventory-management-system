@@ -1,6 +1,7 @@
 import { StockMovementRepository } from "./stock-movement.repository";
 import { PurchaseOrderRepository } from "../purchase-order/purchase-order.repository";
 import { DashboardService } from "../dashboard/dashboard.service";
+import { lowStockAlertQueue } from "../../lib/queue";
 import {
   StockInInput,
   StockOutInput,
@@ -103,6 +104,13 @@ export class StockMovementService {
         ? `Low stock warning: resulting stock (${resultingStock}) is below reorder point (${product.reorderPoint})`
         : undefined;
 
+    // Enqueue background low-stock check (do not await — fire and forget)
+    lowStockAlertQueue.add(
+      "check-low-stock",
+      { productId: data.productId, warehouseId: data.warehouseId },
+      { jobId: `low-stock-${data.productId}-${data.warehouseId}-${Date.now()}` }
+    );
+
     return { movement, warning };
   }
 
@@ -141,6 +149,14 @@ export class StockMovementService {
 
     const result = await this.repo.createTransfer(data, createdBy);
     await this.invalidateDashboardCache();
+
+    // Enqueue background low-stock check for source warehouse (stock reduced there)
+    lowStockAlertQueue.add(
+      "check-low-stock",
+      { productId: data.productId, warehouseId: data.sourceWarehouseId },
+      { jobId: `low-stock-${data.productId}-${data.sourceWarehouseId}-${Date.now()}` }
+    );
+
     return result;
   }
 

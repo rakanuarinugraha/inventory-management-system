@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/app.ts",
+    "dev:worker": "tsx watch src/workers/low-stock-check.worker.ts",
     "build": "tsc",
     "start": "node dist/app.js",
+    "start:worker": "node dist/workers/low-stock-check.worker.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -18,8 +20,10 @@
   "dependencies": {
     "@prisma/client": "^6.12.0",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^6.3.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",

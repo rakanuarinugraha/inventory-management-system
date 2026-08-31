@@ -10,6 +10,7 @@ import stockMovementRoutes from "./modules/stock-movement/stock-movement.routes"
 import stockOpnameRoutes from "./modules/stock-opname/stock-opname.routes";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import reportRoutes from "./modules/report/report.routes";
+import notificationRoutes from "./modules/notification/notification.routes";
 import { errorHandler } from "./middlewares/error.middleware";
 
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api/stock-movements", stockMovementRoutes);
 app.use("/api/stock-opnames", stockOpnameRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

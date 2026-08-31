@@ -1,5 +1,6 @@
 import { StockOpnameRepository } from "./stock-opname.repository";
 import { StockMovementRepository } from "../stock-movement/stock-movement.repository";
+import { lowStockAlertQueue } from "../../lib/queue";
 import {
   CreateOpnameInput,
   ApproveOpnameInput,
@@ -75,7 +76,20 @@ export class StockOpnameService {
     }
 
     if (data.status === "APPROVED") {
-      return this.repo.approve(id, opname.createdBy);
+      const result = await this.repo.approve(id, opname.createdBy);
+
+      // Enqueue low-stock check for items with negative variance (ADJUSTMENT_OUT)
+      for (const item of opname.items) {
+        if (item.variance < 0) {
+          lowStockAlertQueue.add(
+            "check-low-stock",
+            { productId: item.productId, warehouseId: opname.warehouseId },
+            { jobId: `low-stock-${item.productId}-${opname.warehouseId}-${Date.now()}` }
+          );
+        }
+      }
+
+      return result;
     }
     return this.repo.reject(id);
   }
