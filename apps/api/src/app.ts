@@ -5,6 +5,9 @@ import productRoutes from "./modules/product/product.routes";
 import categoryRoutes from "./modules/category/category.routes";
 import warehouseRoutes from "./modules/warehouse/warehouse.routes";
 import supplierRoutes from "./modules/supplier/supplier.routes";
+import purchaseOrderRoutes from "./modules/purchase-order/purchase-order.routes";
+import stockMovementRoutes from "./modules/stock-movement/stock-movement.routes";
+import stockOpnameRoutes from "./modules/stock-opname/stock-opname.routes";
 import { errorHandler } from "./middlewares/error.middleware";
 
 const app = express();
@@ -18,6 +21,9 @@ app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/warehouses", warehouseRoutes);
 app.use("/api/suppliers", supplierRoutes);
+app.use("/api/purchase-orders", purchaseOrderRoutes);
+app.use("/api/stock-movements", stockMovementRoutes);
+app.use("/api/stock-opnames", stockOpnameRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

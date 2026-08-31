@@ -18,7 +18,8 @@ enum MovementType {
   OUT
   TRANSFER_IN
   TRANSFER_OUT
-  ADJUSTMENT
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
 }
 
 enum POStatus {
