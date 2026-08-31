@@ -14,6 +14,7 @@ const pageTitles: Record<string, string> = {
   "stock-movements": "Stock Movements",
   "purchase-orders": "Purchase Orders",
   reports: "Reports",
+  users: "User Management",
 };
 
 export default function AuthenticatedRootLayout({

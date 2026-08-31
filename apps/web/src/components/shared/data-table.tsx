@@ -66,11 +66,13 @@ export function DataTable<T extends Record<string, unknown>>({
       <div className="rounded-lg border border-border">
         <TableComponent>
           <TableHeader>
-            {columns.map((col) => (
-              <TableHead key={col.key} className={col.className}>
-                <Skeleton className="h-4 w-20" />
-              </TableHead>
-            ))}
+            <TableRow>
+              {columns.map((col) => (
+                <TableHead key={col.key} className={col.className}>
+                  <Skeleton className="h-4 w-20" />
+                </TableHead>
+              ))}
+            </TableRow>
           </TableHeader>
           <TableBody>
             {Array.from({ length: pageSize }).map((_, i) => (

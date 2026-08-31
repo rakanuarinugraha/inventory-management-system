@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 import {
   LayoutDashboard,
   Package,
@@ -13,6 +14,7 @@ import {
   ShoppingCart,
   BarChart3,
   Box,
+  Users,
 } from "lucide-react";
 
 const navItems = [
@@ -24,6 +26,7 @@ const navItems = [
   { label: "Stock Movements", href: "/stock-movements", icon: ArrowLeftRight },
   { label: "Purchase Orders", href: "/purchase-orders", icon: ShoppingCart },
   { label: "Reports", href: "/reports", icon: BarChart3 },
+  { label: "Users", href: "/users", icon: Users, adminOnly: true },
 ];
 
 interface SidebarProps {
@@ -32,6 +35,11 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const visibleItems = navItems.filter(
+    (item) => !("adminOnly" in item && item.adminOnly) || user?.role === "ADMIN"
+  );
 
   return (
     <aside
@@ -49,7 +57,7 @@ export function Sidebar({ isCollapsed = false }: SidebarProps) {
       </div>
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         <ul className="flex flex-col gap-0.5">
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <li key={item.href}>
