@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import { ReportRepository } from "./report.repository";
 import { StockMovementReportQuery } from "./report.schema";
 
@@ -124,5 +125,41 @@ export class ReportService {
     ];
 
     return csvRows.join("\n");
+  }
+
+  async getStockExportExcel(): Promise<Buffer> {
+    const rows = await this.repo.getStockExportData();
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "IMS";
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet("Stock Report");
+
+    sheet.columns = [
+      { header: "SKU", key: "sku", width: 20 },
+      { header: "Product Name", key: "productName", width: 30 },
+      { header: "Category", key: "category", width: 20 },
+      { header: "Warehouse", key: "warehouse", width: 20 },
+      { header: "Current Stock", key: "currentStock", width: 15 },
+      { header: "Unit", key: "unit", width: 10 },
+      { header: "Reorder Point", key: "reorderPoint", width: 15 },
+    ];
+
+    // Style the header row
+    const headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFD9E1F2" },
+    };
+
+    for (const row of rows) {
+      sheet.addRow(row);
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 }

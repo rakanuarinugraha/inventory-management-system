@@ -37,4 +37,26 @@ export class ReportController {
       next(error);
     }
   }
+
+  static async exportStockReportExcel(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const buffer = await service.getStockExportExcel();
+      const timestamp = new Date().toISOString().split("T")[0];
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="stock-report-${timestamp}.xlsx"`
+      );
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.send(buffer);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

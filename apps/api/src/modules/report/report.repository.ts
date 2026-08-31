@@ -40,6 +40,21 @@ export class ReportRepository {
       where.warehouseId = filters.warehouseId;
     }
 
+    // For categoryId, we need to filter by product's category
+    // Since groupBy is on productId, we first get matching product IDs
+    let categoryProductIds: string[] | undefined;
+    if (filters.categoryId) {
+      const categoryProducts = await prisma.product.findMany({
+        where: { categoryId: filters.categoryId },
+        select: { id: true },
+      });
+      categoryProductIds = categoryProducts.map((p) => p.id);
+      if (categoryProductIds.length === 0) {
+        return [];
+      }
+      where.productId = { in: categoryProductIds };
+    }
+
     const results = await prisma.stockMovement.groupBy({
       by: ["productId"],
       where,

@@ -19,4 +19,10 @@ router.get(
   ReportController.exportStockReportCsv
 );
 
+router.get(
+  "/stock-export/excel",
+  authorize("ADMIN"),
+  ReportController.exportStockReportExcel
+);
+
 export default router;
