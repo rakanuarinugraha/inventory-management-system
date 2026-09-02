@@ -16,6 +16,7 @@ import {
   BarChart3,
   Box,
   Users,
+  History,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { label: "Stock Movements", href: "/stock-movements", icon: ArrowLeftRight },
   { label: "Stock Opname", href: "/stock-opnames", icon: ClipboardCheck },
   { label: "Purchase Orders", href: "/purchase-orders", icon: ShoppingCart },
+  { label: "Movement History", href: "/movement-history", icon: History },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Users", href: "/users", icon: Users, adminOnly: true },
 ];

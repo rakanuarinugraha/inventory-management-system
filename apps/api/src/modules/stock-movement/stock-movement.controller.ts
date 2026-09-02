@@ -5,6 +5,7 @@ import {
   stockOutSchema,
   transferSchema,
   movementHistoryQuerySchema,
+  allMovementsQuerySchema,
 } from "./stock-movement.schema";
 
 const service = new StockMovementService();
@@ -76,6 +77,16 @@ export class StockMovementController {
       const poId = req.params.poId as string;
       const movements = await service.getMovementsByPoId(poId);
       res.json({ movements });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getAllMovements(req: Request, res: Response, next: NextFunction) {
+    try {
+      const filters = allMovementsQuerySchema.parse(req.query);
+      const result = await service.getAllMovements(filters);
+      res.json(result);
     } catch (error) {
       next(error);
     }

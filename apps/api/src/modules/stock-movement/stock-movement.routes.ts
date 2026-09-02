@@ -7,6 +7,9 @@ const router = Router();
 
 router.use(authenticate);
 
+// All stock movements (paginated, filterable) — for movement history page
+router.get("/", StockMovementController.getAllMovements);
+
 // Stock in — STAFF, MANAGER, or ADMIN
 router.post(
   "/stock-in",

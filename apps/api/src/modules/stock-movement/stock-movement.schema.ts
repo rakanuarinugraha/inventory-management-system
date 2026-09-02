@@ -53,3 +53,25 @@ export const movementHistoryQuerySchema = z.object({
 });
 
 export type MovementHistoryQuery = z.infer<typeof movementHistoryQuerySchema>;
+
+export const allMovementsQuerySchema = z.object({
+  productId: z.string().uuid("Invalid product ID").optional(),
+  date_from: z.string().datetime().optional(),
+  date_to: z.string().datetime().optional(),
+  warehouseId: z.string().uuid("Invalid warehouse ID").optional(),
+  type: z
+    .enum([
+      "IN",
+      "OUT",
+      "TRANSFER_IN",
+      "TRANSFER_OUT",
+      "ADJUSTMENT_IN",
+      "ADJUSTMENT_OUT",
+    ])
+    .optional(),
+  createdBy: z.string().uuid("Invalid user ID").optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type AllMovementsQuery = z.infer<typeof allMovementsQuerySchema>;

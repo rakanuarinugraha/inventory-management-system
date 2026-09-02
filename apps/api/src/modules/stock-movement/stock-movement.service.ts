@@ -7,6 +7,7 @@ import {
   StockOutInput,
   TransferInput,
   MovementHistoryQuery,
+  AllMovementsQuery,
 } from "./stock-movement.schema";
 import prisma from "../../lib/prisma";
 
@@ -180,5 +181,9 @@ export class StockMovementService {
       throw new AppError("Product not found", 404);
     }
     return this.repo.findHistoryByProduct(productId, filters);
+  }
+
+  async getAllMovements(filters: AllMovementsQuery) {
+    return this.repo.findAll(filters);
   }
 }

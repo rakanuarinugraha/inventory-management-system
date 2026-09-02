@@ -7,10 +7,11 @@ import { useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StockInForm } from "./stock-in-form";
 import { StockOutForm } from "./stock-out-form";
+import { StockTransferForm } from "./stock-transfer-form";
 import { Button } from "@/components/ui/button";
-import { Package, PackageMinus } from "lucide-react";
+import { Package, PackageMinus, ArrowLeftRight } from "lucide-react";
 
-type Tab = "stock-in" | "stock-out";
+type Tab = "stock-in" | "stock-out" | "transfer";
 
 export default function StockMovementsPage() {
   const { isAuthenticated } = useAuth();
@@ -28,7 +29,7 @@ export default function StockMovementsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Stock Movements"
-        description="Record incoming and outgoing stock."
+        description="Record incoming, outgoing, and transferred stock."
       />
 
       <div className="flex gap-2">
@@ -50,10 +51,20 @@ export default function StockMovementsPage() {
           <PackageMinus className="size-4" />
           Stock Out
         </Button>
+        <Button
+          variant={activeTab === "transfer" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("transfer")}
+          className="gap-1.5"
+        >
+          <ArrowLeftRight className="size-4" />
+          Transfer
+        </Button>
       </div>
 
       {activeTab === "stock-in" && <StockInForm />}
       {activeTab === "stock-out" && <StockOutForm />}
+      {activeTab === "transfer" && <StockTransferForm />}
     </div>
   );
 }

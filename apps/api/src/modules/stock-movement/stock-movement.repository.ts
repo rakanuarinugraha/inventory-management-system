@@ -5,6 +5,7 @@ import {
   StockOutInput,
   TransferInput,
   MovementHistoryQuery,
+  AllMovementsQuery,
 } from "./stock-movement.schema";
 
 export class StockMovementRepository {
@@ -165,6 +166,51 @@ export class StockMovementRepository {
     }
 
     return stock;
+  }
+
+  async findAll(filters: AllMovementsQuery) {
+    const { productId, date_from, date_to, warehouseId, type, createdBy, page, limit } =
+      filters;
+
+    const where: Record<string, unknown> = {};
+
+    if (productId) where.productId = productId;
+    if (date_from || date_to) {
+      where.createdAt = {
+        ...(date_from && { gte: new Date(date_from) }),
+        ...(date_to && { lte: new Date(date_to) }),
+      };
+    }
+    if (warehouseId) where.warehouseId = warehouseId;
+    if (type) where.type = type;
+    if (createdBy) where.createdBy = createdBy;
+
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      prisma.stockMovement.findMany({
+        where,
+        include: {
+          product: true,
+          warehouse: true,
+          creator: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.stockMovement.count({ where }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findHistoryByProduct(productId: string, filters: MovementHistoryQuery) {
