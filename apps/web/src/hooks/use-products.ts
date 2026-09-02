@@ -41,10 +41,10 @@ export function useUpdateProduct() {
   });
 }
 
-export function useDeleteProduct() {
+export function useDeactivateProduct() {
   const queryClient = useQueryClient();
   return useMutation<{ message: string }, ApiError, string>({
-    mutationFn: (id) => api.delete<{ message: string }>(`/api/products/${id}`),
+    mutationFn: (id) => api.patch<{ message: string }>(`/api/products/${id}/deactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },

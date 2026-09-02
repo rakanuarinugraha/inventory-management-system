@@ -14,7 +14,7 @@ router.get("/:id", ProductController.getById);
 // Admin-only routes
 router.post("/", authorize("ADMIN"), ProductController.create);
 router.put("/:id", authorize("ADMIN"), ProductController.update);
-router.delete("/:id", authorize("ADMIN"), ProductController.delete);
+router.patch("/:id/deactivate", authorize("ADMIN"), ProductController.delete);
 router.patch("/:id/reactivate", authorize("ADMIN"), ProductController.reactivate);
 
 export default router;

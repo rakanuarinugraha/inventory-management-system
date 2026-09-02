@@ -17,7 +17,7 @@ import {
   useProducts,
   useCreateProduct,
   useUpdateProduct,
-  useDeleteProduct,
+  useDeactivateProduct,
   useReactivateProduct,
   type ProductStatusFilter,
 } from "@/hooks/use-products";
@@ -38,7 +38,7 @@ export default function ProductsPage() {
   const { data: categories = [] } = useCategories();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
-  const deleteProduct = useDeleteProduct();
+  const deactivateProduct = useDeactivateProduct();
   const reactivateProduct = useReactivateProduct();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -83,7 +83,7 @@ export default function ProductsPage() {
     if (!targetProduct) return;
 
     if (confirmAction === "deactivate") {
-      deleteProduct.mutate(targetProduct.id, {
+      deactivateProduct.mutate(targetProduct.id, {
         onSuccess: () => {
           toast.success(`Product "${targetProduct.name}" has been deactivated.`);
           setConfirmOpen(false);
@@ -335,7 +335,7 @@ export default function ProductsPage() {
         onConfirm={handleConfirmAction}
         confirmLabel={confirmAction === "deactivate" ? "Deactivate" : "Reactivate"}
         variant={confirmAction === "deactivate" ? "destructive" : "default"}
-        isSubmitting={deleteProduct.isPending || reactivateProduct.isPending}
+        isSubmitting={deactivateProduct.isPending || reactivateProduct.isPending}
       />
     </div>
   );
