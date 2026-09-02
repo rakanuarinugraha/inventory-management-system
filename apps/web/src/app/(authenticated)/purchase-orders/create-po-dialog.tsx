@@ -206,8 +206,8 @@ export function CreatePODialog({ open, onOpenChange }: CreatePODialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pr-8">
           <DialogTitle>Create Purchase Order</DialogTitle>
           <DialogDescription>
             Draft a new purchase order to restock inventory from a supplier.
@@ -257,19 +257,25 @@ export function CreatePODialog({ open, onOpenChange }: CreatePODialogProps) {
               )}
             </div>
 
-            <div className="flex flex-col justify-end">
-              {suggestedProducts.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs font-medium flex items-center gap-1">
+                <Sparkles className="size-3 text-warning" /> Low Stock Suggestions
+              </Label>
+              {suggestedProducts.length > 0 ? (
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   onClick={handleAddSuggestedItems}
-                  className="gap-1.5 border-warning/40 text-warning hover:bg-warning/10"
+                  className="h-8 w-full gap-1.5 border-warning/40 text-warning hover:bg-warning/10 text-xs justify-center"
                 >
-                  <Sparkles className="size-4" />
+                  <Sparkles className="size-3.5" />
                   Quick-add {suggestedProducts.length} low-stock suggestion
                   {suggestedProducts.length > 1 ? "s" : ""}
                 </Button>
+              ) : (
+                <div className="flex h-8 items-center rounded-lg border border-border/60 bg-muted/20 px-3 text-xs text-muted-foreground">
+                  No products below reorder point
+                </div>
               )}
             </div>
           </div>
@@ -301,10 +307,10 @@ export function CreatePODialog({ open, onOpenChange }: CreatePODialogProps) {
                     <th className="px-3 py-2 text-left text-muted-foreground font-medium w-[45%]">
                       Product
                     </th>
-                    <th className="px-3 py-2 text-right text-muted-foreground font-medium w-[18%]">
+                    <th className="px-3 py-2 text-center text-muted-foreground font-medium w-[18%]">
                       Qty
                     </th>
-                    <th className="px-3 py-2 text-right text-muted-foreground font-medium w-[22%]">
+                    <th className="px-3 py-2 text-center text-muted-foreground font-medium w-[22%]">
                       Unit Price ($)
                     </th>
                     <th className="px-3 py-2 text-right text-muted-foreground font-medium w-[15%]">
@@ -358,11 +364,12 @@ export function CreatePODialog({ open, onOpenChange }: CreatePODialogProps) {
                             </p>
                           )}
                         </td>
-                        <td className="p-2 text-right">
+                        <td className="p-2 text-center">
                           <Input
                             type="number"
                             min={1}
                             value={item.qtyOrdered}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) =>
                               handleItemChange(
                                 item.id,
@@ -370,7 +377,7 @@ export function CreatePODialog({ open, onOpenChange }: CreatePODialogProps) {
                                 e.target.value
                               )
                             }
-                            className="text-right text-xs"
+                            className="text-center text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             placeholder="1"
                           />
                           {errors[`item-${item.id}-qtyOrdered`] && (
@@ -379,12 +386,13 @@ export function CreatePODialog({ open, onOpenChange }: CreatePODialogProps) {
                             </p>
                           )}
                         </td>
-                        <td className="p-2 text-right">
+                        <td className="p-2 text-center">
                           <Input
                             type="number"
                             step="0.01"
                             min={0}
                             value={item.unitPrice}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) =>
                               handleItemChange(
                                 item.id,
@@ -392,7 +400,7 @@ export function CreatePODialog({ open, onOpenChange }: CreatePODialogProps) {
                                 e.target.value
                               )
                             }
-                            className="text-right text-xs"
+                            className="text-center text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             placeholder="0.00"
                           />
                           {errors[`item-${item.id}-unitPrice`] && (

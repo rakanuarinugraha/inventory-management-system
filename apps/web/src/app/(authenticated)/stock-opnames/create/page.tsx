@@ -244,13 +244,13 @@ export default function CreateStockOpnamePage() {
                         <th className="px-3 py-2 text-left text-muted-foreground font-medium">
                           Product
                         </th>
-                        <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                        <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                           System Qty
                         </th>
-                        <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                        <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                           Actual Qty
                         </th>
-                        <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                        <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                           Variance
                         </th>
                       </tr>
@@ -278,22 +278,25 @@ export default function CreateStockOpnamePage() {
                                 {product.sku}
                               </div>
                             </td>
-                            <td className="px-3 py-2 text-right text-foreground">
+                            <td className="px-3 py-2 text-center text-foreground">
                               {systemQty}
                             </td>
-                            <td className="px-3 py-2 text-right">
-                              <Input
-                                type="number"
-                                min={0}
-                                value={actualVal}
-                                onChange={(e) =>
-                                  handleQtyChange(product.id, e.target.value)
-                                }
-                                placeholder="—"
-                                className="w-20 text-right"
-                              />
+                            <td className="px-3 py-2 text-center">
+                              <div className="flex justify-center">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={actualVal}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) =>
+                                    handleQtyChange(product.id, e.target.value)
+                                  }
+                                  placeholder="—"
+                                  className="w-24 text-center text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                              </div>
                             </td>
-                            <td className="px-3 py-2 text-right">
+                            <td className="px-3 py-2 text-center">
                               {variance !== null && (
                                 <span
                                   className={cn(

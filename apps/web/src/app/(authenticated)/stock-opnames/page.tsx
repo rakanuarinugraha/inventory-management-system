@@ -9,8 +9,10 @@ import {
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Button } from "@/components/ui/button";
 import { useStockOpnames } from "@/hooks/use-stock-opname";
 import type { StockOpname } from "@/types/stock-opname";
+import { Eye, ClipboardCheck } from "lucide-react";
 
 function opnameStatusLabel(status: string) {
   const map: Record<string, string> = {
@@ -36,7 +38,7 @@ function opnameStatusVariant(
 }
 
 export default function StockOpnamesPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: currentUser } = useAuth();
   const router = useRouter();
   const { data: opnames = [], isLoading } = useStockOpnames();
 
@@ -52,7 +54,17 @@ export default function StockOpnamesPage() {
       header: "Warehouse",
       sortable: true,
       cell: (row) => (
-        <span className="text-foreground">{row.warehouse.name}</span>
+        <div>
+          <button
+            onClick={() => router.push(`/stock-opnames/${row.id}`)}
+            className="font-medium text-foreground hover:text-primary hover:underline text-left transition-colors"
+          >
+            {row.warehouse.name}
+          </button>
+          <div className="text-[10px] text-muted-foreground">
+            ID: {row.id.slice(0, 8).toUpperCase()}
+          </div>
+        </div>
       ),
     },
     {
@@ -67,14 +79,16 @@ export default function StockOpnamesPage() {
     },
     {
       key: "items",
-      header: "Items",
+      header: "Items Count",
       cell: (row) => (
-        <span className="text-foreground">{row.items.length}</span>
+        <span className="text-foreground">
+          {row.items.length} product{row.items.length > 1 ? "s" : ""}
+        </span>
       ),
     },
     {
       key: "createdBy",
-      header: "Created By",
+      header: "Counted By",
       cell: (row) => (
         <span className="text-foreground">{row.creator.name}</span>
       ),
@@ -88,6 +102,42 @@ export default function StockOpnamesPage() {
           {new Date(row.createdAt).toLocaleDateString()}
         </span>
       ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      cell: (row) => {
+        const isPending = row.status === "PENDING";
+        const canApprove =
+          isPending &&
+          (currentUser?.role === "MANAGER" || currentUser?.role === "ADMIN");
+
+        return (
+          <div className="flex items-center gap-2">
+            {canApprove ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/stock-opnames/${row.id}`)}
+                className="h-8 gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/10"
+              >
+                <ClipboardCheck className="size-3.5" />
+                Review & Approve
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(`/stock-opnames/${row.id}`)}
+                className="h-8 gap-1.5 text-xs"
+              >
+                <Eye className="size-3.5" />
+                View Details
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

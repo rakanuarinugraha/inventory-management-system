@@ -117,6 +117,26 @@ export default function MovementHistoryPage() {
 
   if (!isAuthenticated) return null;
 
+  const productOptions = [
+    { value: "ALL", label: "All Products" },
+    ...products.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` })),
+  ];
+
+  const warehouseOptions = [
+    { value: "ALL", label: "All Warehouses" },
+    ...warehouses.map((w) => ({ value: w.id, label: w.name })),
+  ];
+
+  const typeOptions = [
+    { value: "ALL", label: "All Movement Types" },
+    ...MOVEMENT_TYPES.map((t) => ({ value: t.value, label: t.label })),
+  ];
+
+  const userOptions = [
+    { value: "ALL", label: "All Users" },
+    ...users.map((u) => ({ value: u.id, label: u.name })),
+  ];
+
   const columns: DataTableColumn<StockMovement & Record<string, unknown>>[] = [
     {
       key: "product",
@@ -206,16 +226,19 @@ export default function MovementHistoryPage() {
             <div className="space-y-2">
               <Label>Product</Label>
               <Select
-                value={filters.productId ?? ""}
-                onValueChange={(val) => updateFilter("productId", val ?? undefined)}
+                value={filters.productId ?? "ALL"}
+                onValueChange={(val) =>
+                  updateFilter("productId", !val || val === "ALL" ? undefined : val)
+                }
+                items={productOptions}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All products" />
+                  <SelectValue placeholder="All Products" />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} ({p.sku})
+                  {productOptions.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -225,16 +248,19 @@ export default function MovementHistoryPage() {
             <div className="space-y-2">
               <Label>Warehouse</Label>
               <Select
-                value={filters.warehouseId ?? ""}
-                onValueChange={(val) => updateFilter("warehouseId", val ?? undefined)}
+                value={filters.warehouseId ?? "ALL"}
+                onValueChange={(val) =>
+                  updateFilter("warehouseId", !val || val === "ALL" ? undefined : val)
+                }
+                items={warehouseOptions}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All warehouses" />
+                  <SelectValue placeholder="All Warehouses" />
                 </SelectTrigger>
                 <SelectContent>
-                  {warehouses.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>
-                      {w.name}
+                  {warehouseOptions.map((w) => (
+                    <SelectItem key={w.value} value={w.value}>
+                      {w.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -244,14 +270,17 @@ export default function MovementHistoryPage() {
             <div className="space-y-2">
               <Label>Movement Type</Label>
               <Select
-                value={filters.type ?? ""}
-                onValueChange={(val) => updateFilter("type", val ?? undefined)}
+                value={filters.type ?? "ALL"}
+                onValueChange={(val) =>
+                  updateFilter("type", !val || val === "ALL" ? undefined : val)
+                }
+                items={typeOptions}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All types" />
+                  <SelectValue placeholder="All Movement Types" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MOVEMENT_TYPES.map((t) => (
+                  {typeOptions.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
                     </SelectItem>
@@ -263,16 +292,19 @@ export default function MovementHistoryPage() {
             <div className="space-y-2">
               <Label>User</Label>
               <Select
-                value={filters.createdBy ?? ""}
-                onValueChange={(val) => updateFilter("createdBy", val ?? undefined)}
+                value={filters.createdBy ?? "ALL"}
+                onValueChange={(val) =>
+                  updateFilter("createdBy", !val || val === "ALL" ? undefined : val)
+                }
+                items={userOptions}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All users" />
+                  <SelectValue placeholder="All Users" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.name}
+                  {userOptions.map((u) => (
+                    <SelectItem key={u.value} value={u.value}>
+                      {u.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

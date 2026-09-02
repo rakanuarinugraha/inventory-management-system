@@ -90,8 +90,8 @@ export function PODetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pr-8">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-1">
               <DialogTitle className="text-xl">

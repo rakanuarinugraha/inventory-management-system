@@ -188,13 +188,13 @@ export default function StockOpnameDetailPage() {
                   <th className="px-3 py-2 text-left text-muted-foreground font-medium">
                     Product
                   </th>
-                  <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                  <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                     System Qty
                   </th>
-                  <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                  <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                     Actual Qty
                   </th>
-                  <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                  <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                     Variance
                   </th>
                 </tr>
@@ -213,13 +213,13 @@ export default function StockOpnameDetailPage() {
                         {item.product.sku}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-right text-foreground">
+                    <td className="px-3 py-2 text-center text-foreground">
                       {item.systemQty}
                     </td>
-                    <td className="px-3 py-2 text-right text-foreground">
+                    <td className="px-3 py-2 text-center text-foreground">
                       {item.actualQty}
                     </td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-3 py-2 text-center">
                       <span
                         className={cn(
                           "font-medium",
@@ -239,9 +239,9 @@ export default function StockOpnameDetailPage() {
                     <td className="px-3 py-2 font-medium text-foreground">
                       Total
                     </td>
-                    <td className="px-3 py-2 text-right text-foreground" />
-                    <td className="px-3 py-2 text-right text-foreground" />
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-3 py-2 text-center text-foreground" />
+                    <td className="px-3 py-2 text-center text-foreground" />
+                    <td className="px-3 py-2 text-center">
                       <span
                         className={cn(
                           "font-medium",

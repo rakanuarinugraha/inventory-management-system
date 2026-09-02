@@ -257,16 +257,16 @@ export function StockInForm() {
                     <th className="px-3 py-2 text-left text-muted-foreground font-medium">
                       Product
                     </th>
-                    <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                    <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                       Ordered
                     </th>
-                    <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                    <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                       Received
                     </th>
-                    <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                    <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                       Remaining
                     </th>
-                    <th className="px-3 py-2 text-right text-muted-foreground font-medium">
+                    <th className="px-3 py-2 text-center text-muted-foreground font-medium">
                       Qty to Receive
                     </th>
                   </tr>
@@ -288,38 +288,39 @@ export function StockInForm() {
                             {item.product.sku}
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-right text-foreground">
+                        <td className="px-3 py-2 text-center text-foreground">
                           {item.qtyOrdered}
                         </td>
-                        <td className="px-3 py-2 text-right text-foreground">
+                        <td className="px-3 py-2 text-center text-foreground">
                           {item.qtyReceived}
                         </td>
-                        <td className="px-3 py-2 text-right text-foreground">
+                        <td className="px-3 py-2 text-center text-foreground">
                           {remaining}
                         </td>
-                        <td className="px-3 py-2 text-right">
+                        <td className="px-3 py-2 text-center">
                           {isFullyReceived ? (
                             <span className="text-xs text-muted-foreground">
                               Fully received
                             </span>
                           ) : (
-                            <div className="flex justify-end">
+                            <div className="flex justify-center">
                               <Input
                                 type="number"
                                 min={1}
                                 max={remaining}
                                 value={receiveEntries[item.id] ?? ""}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) =>
                                   handleQtyChange(item.id, e.target.value)
                                 }
                                 placeholder="0"
-                                className="w-20 text-right"
+                                className="w-24 text-center text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 aria-invalid={!!itemErrors[item.id]}
                               />
                             </div>
                           )}
                           {itemErrors[item.id] && (
-                            <p className="text-xs text-destructive mt-1 text-right">
+                            <p className="text-xs text-destructive mt-1 text-center">
                               {itemErrors[item.id]}
                             </p>
                           )}
