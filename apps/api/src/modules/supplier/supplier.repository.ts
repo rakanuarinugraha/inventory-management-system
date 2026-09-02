@@ -1,9 +1,18 @@
 import prisma from "../../lib/prisma";
 import { CreateSupplierInput, UpdateSupplierInput } from "./supplier.schema";
 
+export type SupplierStatusFilter = "active" | "inactive" | "all";
+
 export class SupplierRepository {
-  async findAll() {
+  async findAll(status: SupplierStatusFilter = "active") {
+    const where =
+      status === "active"
+        ? { isActive: true }
+        : status === "inactive"
+          ? { isActive: false }
+          : {};
     return prisma.supplier.findMany({
+      where,
       orderBy: { name: "asc" },
     });
   }
@@ -23,8 +32,18 @@ export class SupplierRepository {
     });
   }
 
-  async delete(id: string) {
-    return prisma.supplier.delete({ where: { id } });
+  async deactivate(id: string) {
+    return prisma.supplier.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  async reactivate(id: string) {
+    return prisma.supplier.update({
+      where: { id },
+      data: { isActive: true },
+    });
   }
 
   async findByName(name: string) {

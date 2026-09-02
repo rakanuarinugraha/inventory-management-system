@@ -2,10 +2,18 @@ import prisma from "../../lib/prisma";
 import { stockCalculator } from "../../lib/stock-calculator";
 import { CreateProductInput, UpdateProductInput } from "./product.schema";
 
+export type ProductStatusFilter = "active" | "inactive" | "all";
+
 export class ProductRepository {
-  async findAll() {
+  async findAll(status: ProductStatusFilter = "active") {
+    const where =
+      status === "active"
+        ? { isActive: true }
+        : status === "inactive"
+          ? { isActive: false }
+          : {};
     return prisma.product.findMany({
-      where: { isActive: true },
+      where,
       include: { category: true },
       orderBy: { name: "asc" },
     });
@@ -43,6 +51,13 @@ export class ProductRepository {
     return prisma.product.update({
       where: { id },
       data: { isActive: false },
+    });
+  }
+
+  async reactivate(id: string) {
+    return prisma.product.update({
+      where: { id },
+      data: { isActive: true },
     });
   }
 

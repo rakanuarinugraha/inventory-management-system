@@ -1,4 +1,4 @@
-import { WarehouseRepository } from "./warehouse.repository";
+import { WarehouseRepository, WarehouseStatusFilter } from "./warehouse.repository";
 import { CreateWarehouseInput, UpdateWarehouseInput } from "./warehouse.schema";
 
 class AppError extends Error {
@@ -14,8 +14,8 @@ class AppError extends Error {
 export class WarehouseService {
   private repo = new WarehouseRepository();
 
-  async getAll() {
-    return this.repo.findAll();
+  async getAll(status: WarehouseStatusFilter = "active") {
+    return this.repo.findAll(status);
   }
 
   async getById(id: string) {
@@ -51,28 +51,25 @@ export class WarehouseService {
     return this.repo.update(id, data);
   }
 
-  async delete(id: string) {
+  async deactivate(id: string) {
     const warehouse = await this.repo.findById(id);
     if (!warehouse) {
       throw new AppError("Warehouse not found", 404);
     }
-
-    const hasMovements = await this.repo.hasMovements(id);
-    if (hasMovements) {
-      throw new AppError(
-        "Cannot delete warehouse with associated stock movements",
-        400
-      );
+    if (!warehouse.isActive) {
+      throw new AppError("Warehouse is already inactive", 400);
     }
+    return this.repo.deactivate(id);
+  }
 
-    const hasOpnames = await this.repo.hasOpnames(id);
-    if (hasOpnames) {
-      throw new AppError(
-        "Cannot delete warehouse with associated stock opnames",
-        400
-      );
+  async reactivate(id: string) {
+    const warehouse = await this.repo.findById(id);
+    if (!warehouse) {
+      throw new AppError("Warehouse not found", 404);
     }
-
-    return this.repo.delete(id);
+    if (warehouse.isActive) {
+      throw new AppError("Warehouse is already active", 400);
+    }
+    return this.repo.reactivate(id);
   }
 }

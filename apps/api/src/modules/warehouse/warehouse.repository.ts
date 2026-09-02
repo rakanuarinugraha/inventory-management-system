@@ -1,9 +1,18 @@
 import prisma from "../../lib/prisma";
 import { CreateWarehouseInput, UpdateWarehouseInput } from "./warehouse.schema";
 
+export type WarehouseStatusFilter = "active" | "inactive" | "all";
+
 export class WarehouseRepository {
-  async findAll() {
+  async findAll(status: WarehouseStatusFilter = "active") {
+    const where =
+      status === "active"
+        ? { isActive: true }
+        : status === "inactive"
+          ? { isActive: false }
+          : {};
     return prisma.warehouse.findMany({
+      where,
       orderBy: { name: "asc" },
     });
   }
@@ -23,8 +32,18 @@ export class WarehouseRepository {
     });
   }
 
-  async delete(id: string) {
-    return prisma.warehouse.delete({ where: { id } });
+  async deactivate(id: string) {
+    return prisma.warehouse.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  async reactivate(id: string) {
+    return prisma.warehouse.update({
+      where: { id },
+      data: { isActive: true },
+    });
   }
 
   async findByName(name: string) {

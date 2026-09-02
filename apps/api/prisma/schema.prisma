@@ -109,6 +109,7 @@ model Supplier {
   contactEmail String?  @map("contact_email")
   contactPhone String?  @map("contact_phone")
   address      String?
+  isActive     Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

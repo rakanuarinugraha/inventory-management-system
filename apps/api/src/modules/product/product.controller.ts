@@ -1,13 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import { ProductService } from "./product.service";
 import { createProductSchema, updateProductSchema } from "./product.schema";
+import { ProductStatusFilter } from "./product.repository";
 
 const service = new ProductService();
 
+const VALID_STATUSES: ProductStatusFilter[] = ["active", "inactive", "all"];
+
 export class ProductController {
-  static async getAll(_req: Request, res: Response, next: NextFunction) {
+  static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const products = await service.getAll();
+      const status = (req.query.status as string) || "active";
+      if (!VALID_STATUSES.includes(status as ProductStatusFilter)) {
+        res.status(400).json({
+          message: `Invalid status filter. Must be one of: ${VALID_STATUSES.join(", ")}`,
+        });
+        return;
+      }
+      const products = await service.getAll(status as ProductStatusFilter);
       res.json({ products });
     } catch (error) {
       next(error);
@@ -50,6 +60,16 @@ export class ProductController {
       const id = req.params.id as string;
       await service.softDelete(id);
       res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async reactivate(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const product = await service.reactivate(id);
+      res.json({ message: "Product reactivated successfully", product });
     } catch (error) {
       next(error);
     }

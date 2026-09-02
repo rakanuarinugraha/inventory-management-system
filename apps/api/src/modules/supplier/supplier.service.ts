@@ -1,4 +1,4 @@
-import { SupplierRepository } from "./supplier.repository";
+import { SupplierRepository, SupplierStatusFilter } from "./supplier.repository";
 import { CreateSupplierInput, UpdateSupplierInput } from "./supplier.schema";
 
 class AppError extends Error {
@@ -14,8 +14,8 @@ class AppError extends Error {
 export class SupplierService {
   private repo = new SupplierRepository();
 
-  async getAll() {
-    return this.repo.findAll();
+  async getAll(status: SupplierStatusFilter = "active") {
+    return this.repo.findAll(status);
   }
 
   async getById(id: string) {
@@ -51,20 +51,25 @@ export class SupplierService {
     return this.repo.update(id, data);
   }
 
-  async delete(id: string) {
+  async deactivate(id: string) {
     const supplier = await this.repo.findById(id);
     if (!supplier) {
       throw new AppError("Supplier not found", 404);
     }
-
-    const hasPOs = await this.repo.hasPurchaseOrders(id);
-    if (hasPOs) {
-      throw new AppError(
-        "Cannot delete supplier with associated purchase orders",
-        400
-      );
+    if (!supplier.isActive) {
+      throw new AppError("Supplier is already inactive", 400);
     }
+    return this.repo.deactivate(id);
+  }
 
-    return this.repo.delete(id);
+  async reactivate(id: string) {
+    const supplier = await this.repo.findById(id);
+    if (!supplier) {
+      throw new AppError("Supplier not found", 404);
+    }
+    if (supplier.isActive) {
+      throw new AppError("Supplier is already active", 400);
+    }
+    return this.repo.reactivate(id);
   }
 }

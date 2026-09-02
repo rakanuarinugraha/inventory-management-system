@@ -13,6 +13,9 @@ router.get("/:id", SupplierController.getById);
 // ADMIN or MANAGER can create/update suppliers
 router.post("/", authorize("ADMIN", "MANAGER"), SupplierController.create);
 router.put("/:id", authorize("ADMIN", "MANAGER"), SupplierController.update);
-router.delete("/:id", authorize("ADMIN"), SupplierController.delete);
+
+// Soft-delete: deactivate / reactivate
+router.patch("/:id/deactivate", authorize("ADMIN"), SupplierController.deactivate);
+router.patch("/:id/reactivate", authorize("ADMIN"), SupplierController.reactivate);
 
 export default router;

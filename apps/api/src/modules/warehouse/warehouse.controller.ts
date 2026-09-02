@@ -4,13 +4,23 @@ import {
   createWarehouseSchema,
   updateWarehouseSchema,
 } from "./warehouse.schema";
+import { WarehouseStatusFilter } from "./warehouse.repository";
 
 const service = new WarehouseService();
 
+const VALID_STATUSES: WarehouseStatusFilter[] = ["active", "inactive", "all"];
+
 export class WarehouseController {
-  static async getAll(_req: Request, res: Response, next: NextFunction) {
+  static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const warehouses = await service.getAll();
+      const status = (req.query.status as string) || "active";
+      if (!VALID_STATUSES.includes(status as WarehouseStatusFilter)) {
+        res.status(400).json({
+          message: `Invalid status filter. Must be one of: ${VALID_STATUSES.join(", ")}`,
+        });
+        return;
+      }
+      const warehouses = await service.getAll(status as WarehouseStatusFilter);
       res.json({ warehouses });
     } catch (error) {
       next(error);
@@ -50,11 +60,21 @@ export class WarehouseController {
     }
   }
 
-  static async delete(req: Request, res: Response, next: NextFunction) {
+  static async deactivate(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
-      await service.delete(id);
-      res.json({ message: "Warehouse deleted successfully" });
+      const warehouse = await service.deactivate(id);
+      res.json({ message: "Warehouse deactivated successfully", warehouse });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async reactivate(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const warehouse = await service.reactivate(id);
+      res.json({ message: "Warehouse reactivated successfully", warehouse });
     } catch (error) {
       next(error);
     }
