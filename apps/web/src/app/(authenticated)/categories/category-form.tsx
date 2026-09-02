@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormDialog } from "@/components/shared/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,13 +36,18 @@ export function CategoryForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
+  const [prevCategory, setPrevCategory] = useState(category);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (category !== prevCategory || open !== prevOpen) {
+    setPrevCategory(category);
+    setPrevOpen(open);
     if (open) {
       setName(category?.name ?? "");
       setParentId(category?.parentId ?? "");
       setErrors({});
     }
-  }, [open, category]);
+  }
 
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen);

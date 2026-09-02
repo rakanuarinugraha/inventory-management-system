@@ -33,9 +33,23 @@ export const transferSchema = z
 
 export type TransferInput = z.infer<typeof transferSchema>;
 
+export const currentStockQuerySchema = z.object({
+  productId: z.string().uuid("Invalid product ID"),
+  warehouseId: z.string().uuid("Invalid warehouse ID"),
+});
+
+export type CurrentStockQuery = z.infer<typeof currentStockQuerySchema>;
+
+const dateParamSchema = z
+  .string()
+  .refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date or datetime format",
+  })
+  .optional();
+
 export const movementHistoryQuerySchema = z.object({
-  date_from: z.string().datetime().optional(),
-  date_to: z.string().datetime().optional(),
+  date_from: dateParamSchema,
+  date_to: dateParamSchema,
   warehouseId: z.string().uuid("Invalid warehouse ID").optional(),
   type: z
     .enum([
@@ -56,8 +70,8 @@ export type MovementHistoryQuery = z.infer<typeof movementHistoryQuerySchema>;
 
 export const allMovementsQuerySchema = z.object({
   productId: z.string().uuid("Invalid product ID").optional(),
-  date_from: z.string().datetime().optional(),
-  date_to: z.string().datetime().optional(),
+  date_from: dateParamSchema,
+  date_to: dateParamSchema,
   warehouseId: z.string().uuid("Invalid warehouse ID").optional(),
   type: z
     .enum([

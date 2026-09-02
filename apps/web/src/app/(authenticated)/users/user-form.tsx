@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormDialog } from "@/components/shared/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,12 @@ export function UserForm({ open, onOpenChange, user, onSubmit, isSubmitting }: U
   const [role, setRole] = useState<UserRole>(user?.role ?? "STAFF");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
+  const [prevUser, setPrevUser] = useState(user);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (user !== prevUser || open !== prevOpen) {
+    setPrevUser(user);
+    setPrevOpen(open);
     if (open) {
       setName(user?.name ?? "");
       setEmail(user?.email ?? "");
@@ -43,7 +48,7 @@ export function UserForm({ open, onOpenChange, user, onSubmit, isSubmitting }: U
       setRole(user?.role ?? "STAFF");
       setErrors({});
     }
-  }, [open, user]);
+  }
 
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen);

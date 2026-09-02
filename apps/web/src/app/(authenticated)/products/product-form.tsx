@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormDialog } from "@/components/shared/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +53,12 @@ export function ProductForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
+  const [prevProduct, setPrevProduct] = useState(product);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (product !== prevProduct || open !== prevOpen) {
+    setPrevProduct(product);
+    setPrevOpen(open);
     if (open) {
       setSku(product?.sku ?? "");
       setName(product?.name ?? "");
@@ -62,7 +67,7 @@ export function ProductForm({
       setReorderPoint(product?.reorderPoint?.toString() ?? "0");
       setErrors({});
     }
-  }, [open, product]);
+  }
 
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen);

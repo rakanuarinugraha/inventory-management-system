@@ -14,14 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import {
-  usePurchaseOrders,
-  useReceiveStockIn,
-} from "@/hooks/use-purchase-orders";
+import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
+import { useStockIn } from "@/hooks/use-stock-movements";
 import { useWarehouses } from "@/hooks/use-warehouses";
 import { ApiError } from "@/lib/api";
 
-const RECEIVABLE_STATUSES = new Set(["DRAFT", "SUBMITTED", "PARTIALLY_RECEIVED"]);
+const RECEIVABLE_STATUSES = new Set(["SUBMITTED", "PARTIALLY_RECEIVED"]);
 
 function poStatusLabel(status: string) {
   const map: Record<string, string> = {
@@ -48,12 +46,17 @@ function poStatusVariant(status: string): "default" | "secondary" | "destructive
 export function StockInForm() {
   const { data: purchaseOrders = [], isLoading: isLoadingPOs } = usePurchaseOrders();
   const { data: warehouses = [] } = useWarehouses("active");
-  const receiveStockIn = useReceiveStockIn();
+  const stockIn = useStockIn();
 
   const [selectedPoId, setSelectedPoId] = useState<string>("");
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("");
-  const [receiveEntries, setReceiveEntries] = useState<Record<string, number>>({});
+  const [receiveEntries, setReceiveEntries] = useState<Record<string, string>>({});
+  const [note, setNote] = useState<string>("");
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+
+  const receivablePOs = useMemo(() => {
+    return purchaseOrders.filter((po) => RECEIVABLE_STATUSES.has(po.status));
+  }, [purchaseOrders]);
 
   const selectedPo = useMemo(() => {
     return purchaseOrders.find((po) => po.id === selectedPoId) ?? null;
@@ -69,14 +72,14 @@ export function StockInForm() {
   function handleSelectPo(poId: string) {
     setSelectedPoId(poId);
     setReceiveEntries({});
+    setNote("");
     setItemErrors({});
   }
 
   function handleQtyChange(itemId: string, value: string) {
-    const num = parseInt(value, 10);
     setReceiveEntries((prev) => ({
       ...prev,
-      [itemId]: isNaN(num) ? 0 : num,
+      [itemId]: value,
     }));
     setItemErrors((prev) => {
       const next = { ...prev };
@@ -90,12 +93,17 @@ export function StockInForm() {
     let hasAtLeastOne = false;
 
     for (const item of receivableItems) {
-      const qty = receiveEntries[item.id] ?? 0;
-      if (qty > 0) {
-        hasAtLeastOne = true;
-        const remaining = item.qtyOrdered - item.qtyReceived;
-        if (qty > remaining) {
-          errors[item.id] = `Cannot exceed remaining qty of ${remaining}`;
+      const raw = receiveEntries[item.id] ?? "";
+      if (raw.trim() !== "") {
+        const qty = parseInt(raw, 10);
+        if (isNaN(qty) || qty <= 0) {
+          errors[item.id] = "Must be at least 1";
+        } else {
+          hasAtLeastOne = true;
+          const remaining = item.qtyOrdered - item.qtyReceived;
+          if (qty > remaining) {
+            errors[item.id] = `Cannot exceed remaining qty of ${remaining}`;
+          }
         }
       }
     }
@@ -113,26 +121,36 @@ export function StockInForm() {
     if (!validate() || !selectedPo || !selectedWarehouseId) return;
 
     const itemsToReceive = receivableItems
-      .filter((item) => (receiveEntries[item.id] ?? 0) > 0)
-      .map((item) => ({
-        poId: selectedPo.id,
-        productId: item.productId,
-        warehouseId: selectedWarehouseId,
-        quantity: receiveEntries[item.id] ?? 0,
-      }));
+      .map((item) => {
+        const raw = receiveEntries[item.id] ?? "";
+        const qty = parseInt(raw, 10);
+        return {
+          poId: selectedPo.id,
+          productId: item.productId,
+          warehouseId: selectedWarehouseId,
+          quantity: qty,
+          note: note.trim() || undefined,
+        };
+      })
+      .filter((entry) => !isNaN(entry.quantity) && entry.quantity > 0);
+
+    if (itemsToReceive.length === 0) {
+      toast.error("Enter a quantity for at least one item to receive.");
+      return;
+    }
 
     let successCount = 0;
     let failCount = 0;
+    let lastErrorMessage = "";
 
-    const results = await Promise.allSettled(
-      itemsToReceive.map((entry) => receiveStockIn.mutateAsync(entry))
-    );
-
-    for (const result of results) {
-      if (result.status === "fulfilled") {
+    for (const entry of itemsToReceive) {
+      try {
+        await stockIn.mutateAsync(entry);
         successCount++;
-      } else {
+      } catch (err) {
         failCount++;
+        lastErrorMessage =
+          err instanceof ApiError ? err.message : "Failed to receive item.";
       }
     }
 
@@ -141,23 +159,19 @@ export function StockInForm() {
         `Stock received successfully for ${successCount} item${successCount > 1 ? "s" : ""}.`
       );
       setReceiveEntries({});
+      setNote("");
       setSelectedPoId("");
       setSelectedWarehouseId("");
     } else if (successCount > 0) {
       toast.warning(
-        `Received ${successCount} item${successCount > 1 ? "s" : ""}, but ${failCount} failed.`
+        `Received ${successCount} item${successCount > 1 ? "s" : ""}, but ${failCount} failed: ${lastErrorMessage}`
       );
     } else {
-      const err = results[0] as PromiseRejectedResult;
-      const message =
-        err.reason instanceof ApiError
-          ? err.reason.message
-          : "Failed to receive stock.";
-      toast.error(message);
+      toast.error(lastErrorMessage || "Failed to receive stock.");
     }
   }
 
-  const isSubmitting = receiveStockIn.isPending;
+  const isSubmitting = stockIn.isPending;
 
   return (
     <div className="space-y-6">
@@ -167,30 +181,29 @@ export function StockInForm() {
           <Select
             value={selectedPoId}
             onValueChange={(val) => handleSelectPo(val ?? "")}
-            items={purchaseOrders
-              .filter((po) => RECEIVABLE_STATUSES.has(po.status))
-              .map((po) => ({ value: po.id, label: `PO ${po.id.slice(0, 8)}` }))}
+            items={receivablePOs.map((po) => ({
+              value: po.id,
+              label: `PO from ${po.supplier.name} (${poStatusLabel(po.status)})`,
+            }))}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a purchase order" />
+              <SelectValue placeholder="Select a submitted purchase order" />
             </SelectTrigger>
             <SelectContent>
               {isLoadingPOs ? (
                 <SelectItem value="_loading" disabled>
                   Loading...
                 </SelectItem>
-              ) : purchaseOrders.filter((po) => RECEIVABLE_STATUSES.has(po.status)).length === 0 ? (
+              ) : receivablePOs.length === 0 ? (
                 <SelectItem value="_empty" disabled>
-                  No receivable POs found
+                  No submitted POs found
                 </SelectItem>
               ) : (
-                purchaseOrders
-                  .filter((po) => RECEIVABLE_STATUSES.has(po.status))
-                  .map((po) => (
-                    <SelectItem key={po.id} value={po.id}>
-                      {po.supplier.name} &mdash; {poStatusLabel(po.status)}
-                    </SelectItem>
-                  ))
+                receivablePOs.map((po) => (
+                  <SelectItem key={po.id} value={po.id}>
+                    {po.supplier.name} &mdash; {poStatusLabel(po.status)}
+                  </SelectItem>
+                ))
               )}
             </SelectContent>
           </Select>
@@ -236,7 +249,7 @@ export function StockInForm() {
               />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
@@ -293,7 +306,7 @@ export function StockInForm() {
                             <div className="flex justify-end">
                               <Input
                                 type="number"
-                                min={0}
+                                min={1}
                                 max={remaining}
                                 value={receiveEntries[item.id] ?? ""}
                                 onChange={(e) =>
@@ -317,6 +330,24 @@ export function StockInForm() {
                 </tbody>
               </table>
             </div>
+
+            {receivableItems.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-2">
+                All items in this purchase order have already been fully received.
+              </p>
+            )}
+
+            {receivableItems.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="stock-in-note">Note (optional)</Label>
+                <Input
+                  id="stock-in-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Delivery note / reference info..."
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

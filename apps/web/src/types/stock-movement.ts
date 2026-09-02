@@ -39,3 +39,12 @@ export interface StockOutInput {
   quantity: number;
   note?: string;
 }
+
+export interface TransferInput {
+  productId: string;
+  sourceWarehouseId: string;
+  destinationWarehouseId: string;
+  quantity: number;
+  note?: string;
+}
+

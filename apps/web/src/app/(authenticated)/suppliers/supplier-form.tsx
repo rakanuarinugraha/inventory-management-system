@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormDialog } from "@/components/shared/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,12 @@ export function SupplierForm({
   const [address, setAddress] = useState(supplier?.address ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
+  const [prevSupplier, setPrevSupplier] = useState(supplier);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (supplier !== prevSupplier || open !== prevOpen) {
+    setPrevSupplier(supplier);
+    setPrevOpen(open);
     if (open) {
       setName(supplier?.name ?? "");
       setContactEmail(supplier?.contactEmail ?? "");
@@ -36,7 +41,7 @@ export function SupplierForm({
       setAddress(supplier?.address ?? "");
       setErrors({});
     }
-  }, [open, supplier]);
+  }
 
   function validate(): boolean {
     const next: Record<string, string> = {};

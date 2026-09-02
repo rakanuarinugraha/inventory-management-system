@@ -1,11 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
-import type { StockMovement } from "@/types/stock-movement";
+import type {
+  StockMovement,
+  StockInInput,
+  StockOutInput,
+  TransferInput,
+} from "@/types/stock-movement";
+
+interface StockInResponse {
+  message: string;
+  movement: StockMovement;
+}
 
 interface StockOutResponse {
   message: string;
   movement: StockMovement;
   warning: string | null;
+}
+
+interface TransferResponse {
+  message: string;
+  movements: {
+    transferOut: StockMovement;
+    transferIn: StockMovement;
+  };
 }
 
 interface CurrentStockResponse {
@@ -48,19 +66,29 @@ export function useCurrentStock(productId: string | null, warehouseId: string | 
   });
 }
 
+export function useStockIn() {
+  const queryClient = useQueryClient();
+  return useMutation<StockInResponse, ApiError, StockInInput>({
+    mutationFn: (data) => api.post("/api/stock-movements/stock-in", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["current-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
 export function useStockOut() {
   const queryClient = useQueryClient();
-  return useMutation<StockOutResponse, ApiError, {
-    productId: string;
-    warehouseId: string;
-    quantity: number;
-    note?: string;
-  }>({
+  return useMutation<StockOutResponse, ApiError, StockOutInput>({
     mutationFn: (data) => api.post("/api/stock-movements/stock-out", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["current-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -89,22 +117,13 @@ export function useMovementHistory(filters: MovementHistoryFilters) {
 
 export function useTransferStock() {
   const queryClient = useQueryClient();
-  return useMutation<
-    { message: string; movements: StockMovement[] },
-    ApiError,
-    {
-      productId: string;
-      sourceWarehouseId: string;
-      destinationWarehouseId: string;
-      quantity: number;
-      note?: string;
-    }
-  >({
+  return useMutation<TransferResponse, ApiError, TransferInput>({
     mutationFn: (data) => api.post("/api/stock-movements/transfer", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["current-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

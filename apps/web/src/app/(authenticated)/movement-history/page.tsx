@@ -36,6 +36,28 @@ const MOVEMENT_TYPES = [
   { value: "ADJUSTMENT_OUT", label: "Adjustment Out" },
 ];
 
+const REFERENCE_TYPE_LABELS: Record<string, string> = {
+  PURCHASE_ORDER: "Purchase Order",
+  STOCK_OPNAME: "Stock Opname",
+  TRANSFER: "Transfer",
+  MANUAL: "Manual",
+};
+
+function referenceTypeLabel(type: string | null): string {
+  if (!type) return "—";
+  return REFERENCE_TYPE_LABELS[type] ?? type;
+}
+
+function getLocalDateString(isoString?: string): string {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "";
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function movementTypeLabel(type: string) {
   return MOVEMENT_TYPES.find((t) => t.value === type)?.label ?? type;
 }
@@ -144,9 +166,9 @@ export default function MovementHistoryPage() {
       header: "Reference",
       cell: (row) => (
         <span className="text-sm text-muted-foreground">
-          {row.referenceType ?? "—"}
+          {referenceTypeLabel(row.referenceType)}
           {row.referenceId && (
-            <span className="ml-1 text-xs">
+            <span className="ml-1 text-xs font-mono">
               ({row.referenceId.slice(0, 8)})
             </span>
           )}
@@ -261,11 +283,13 @@ export default function MovementHistoryPage() {
               <Label>Date From</Label>
               <Input
                 type="date"
-                value={filters.date_from?.slice(0, 10) ?? ""}
+                value={getLocalDateString(filters.date_from)}
                 onChange={(e) =>
                   updateFilter(
                     "date_from",
-                    e.target.value ? new Date(e.target.value).toISOString() : undefined
+                    e.target.value
+                      ? new Date(e.target.value + "T00:00:00").toISOString()
+                      : undefined
                   )
                 }
               />
@@ -275,12 +299,12 @@ export default function MovementHistoryPage() {
               <Label>Date To</Label>
               <Input
                 type="date"
-                value={filters.date_to?.slice(0, 10) ?? ""}
+                value={getLocalDateString(filters.date_to)}
                 onChange={(e) =>
                   updateFilter(
                     "date_to",
                     e.target.value
-                      ? new Date(e.target.value + "T23:59:59.999Z").toISOString()
+                      ? new Date(e.target.value + "T23:59:59.999").toISOString()
                       : undefined
                   )
                 }

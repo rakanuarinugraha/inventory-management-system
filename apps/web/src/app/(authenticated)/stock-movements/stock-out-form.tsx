@@ -17,6 +17,7 @@ import { AlertTriangle } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useWarehouses } from "@/hooks/use-warehouses";
 import { useCurrentStock, useStockOut } from "@/hooks/use-stock-movements";
+import { ApiError } from "@/lib/api";
 
 export function StockOutForm() {
   const { data: products = [], isLoading: isLoadingProducts } =
@@ -62,21 +63,29 @@ export function StockOutForm() {
   async function handleSubmit() {
     if (!validate()) return;
 
-    const result = await stockOut.mutateAsync({
-      productId: selectedProductId,
-      warehouseId: selectedWarehouseId,
-      quantity: parseInt(quantity, 10),
-      note: note.trim() || undefined,
-    });
+    try {
+      const result = await stockOut.mutateAsync({
+        productId: selectedProductId,
+        warehouseId: selectedWarehouseId,
+        quantity: parseInt(quantity, 10),
+        note: note.trim() || undefined,
+      });
 
-    if (result.warning) {
-      toast.warning(result.warning, { duration: 6000 });
-    } else {
-      toast.success("Stock out recorded successfully.");
+      if (result.warning) {
+        toast.warning(result.warning, { duration: 6000 });
+      } else {
+        toast.success("Stock out recorded successfully.");
+      }
+
+      setQuantity("");
+      setNote("");
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Failed to record stock out.";
+      toast.error(message);
     }
-
-    setQuantity("");
-    setNote("");
   }
 
   return (

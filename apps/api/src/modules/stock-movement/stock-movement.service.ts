@@ -105,12 +105,16 @@ export class StockMovementService {
         ? `Low stock warning: resulting stock (${resultingStock}) is below reorder point (${product.reorderPoint})`
         : undefined;
 
-    // Enqueue background low-stock check (do not await — fire and forget)
-    lowStockAlertQueue.add(
-      "check-low-stock",
-      { productId: data.productId, warehouseId: data.warehouseId },
-      { jobId: `low-stock-${data.productId}-${data.warehouseId}-${Date.now()}` }
-    );
+    // Enqueue background low-stock check (do not await — fire and forget, catch errors safely)
+    lowStockAlertQueue
+      .add(
+        "check-low-stock",
+        { productId: data.productId, warehouseId: data.warehouseId },
+        { jobId: `low-stock-${data.productId}-${data.warehouseId}-${Date.now()}` }
+      )
+      .catch((err) => {
+        console.error("Failed to enqueue low-stock alert:", err);
+      });
 
     return { movement, warning };
   }
@@ -152,11 +156,15 @@ export class StockMovementService {
     await this.invalidateDashboardCache();
 
     // Enqueue background low-stock check for source warehouse (stock reduced there)
-    lowStockAlertQueue.add(
-      "check-low-stock",
-      { productId: data.productId, warehouseId: data.sourceWarehouseId },
-      { jobId: `low-stock-${data.productId}-${data.sourceWarehouseId}-${Date.now()}` }
-    );
+    lowStockAlertQueue
+      .add(
+        "check-low-stock",
+        { productId: data.productId, warehouseId: data.sourceWarehouseId },
+        { jobId: `low-stock-${data.productId}-${data.sourceWarehouseId}-${Date.now()}` }
+      )
+      .catch((err) => {
+        console.error("Failed to enqueue low-stock alert for transfer:", err);
+      });
 
     return result;
   }

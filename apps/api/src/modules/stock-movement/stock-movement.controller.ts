@@ -4,6 +4,7 @@ import {
   stockInSchema,
   stockOutSchema,
   transferSchema,
+  currentStockQuerySchema,
   movementHistoryQuerySchema,
   allMovementsQuerySchema,
 } from "./stock-movement.schema";
@@ -55,16 +56,7 @@ export class StockMovementController {
 
   static async getCurrentStock(req: Request, res: Response, next: NextFunction) {
     try {
-      const productId = req.query.productId as string;
-      const warehouseId = req.query.warehouseId as string;
-
-      if (!productId || !warehouseId) {
-        res
-          .status(400)
-          .json({ message: "productId and warehouseId are required" });
-        return;
-      }
-
+      const { productId, warehouseId } = currentStockQuerySchema.parse(req.query);
       const currentStock = await service.getCurrentStock(productId, warehouseId);
       res.json({ productId, warehouseId, currentStock });
     } catch (error) {

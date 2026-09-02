@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import type { PurchaseOrder } from "@/types/purchase-order";
 
@@ -31,25 +31,5 @@ export function usePurchaseOrder(id: string | null) {
   });
 }
 
-export function useReceiveStockIn() {
-  const queryClient = useQueryClient();
-  return useMutation<
-    { message: string; movement: Record<string, unknown> },
-    ApiError,
-    {
-      poId: string;
-      productId: string;
-      warehouseId: string;
-      quantity: number;
-      note?: string;
-    }
-  >({
-    mutationFn: (data) =>
-      api.post("/api/stock-movements/stock-in", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-    },
-  });
-}
+export { useStockIn as useReceiveStockIn } from "./use-stock-movements";
+

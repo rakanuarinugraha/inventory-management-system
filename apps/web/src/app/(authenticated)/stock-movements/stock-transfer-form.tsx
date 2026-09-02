@@ -17,6 +17,7 @@ import { AlertTriangle } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useWarehouses } from "@/hooks/use-warehouses";
 import { useCurrentStock, useTransferStock } from "@/hooks/use-stock-movements";
+import { ApiError } from "@/lib/api";
 
 export function StockTransferForm() {
   const { data: products = [], isLoading: isLoadingProducts } =
@@ -63,25 +64,23 @@ export function StockTransferForm() {
   async function handleSubmit() {
     if (!validate()) return;
 
-    await transferStock.mutateAsync(
-      {
+    try {
+      await transferStock.mutateAsync({
         productId: selectedProductId,
         sourceWarehouseId,
         destinationWarehouseId: destWarehouseId,
         quantity: parseInt(quantity, 10),
         note: note.trim() || undefined,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Stock transferred successfully.");
-          setQuantity("");
-          setNote("");
-        },
-        onError: (err) => {
-          toast.error(err.message || "Failed to transfer stock.");
-        },
-      }
-    );
+      });
+
+      toast.success("Stock transferred successfully.");
+      setQuantity("");
+      setNote("");
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Failed to transfer stock.";
+      toast.error(message);
+    }
   }
 
   return (
@@ -131,10 +130,15 @@ export function StockTransferForm() {
         <Select
           value={sourceWarehouseId}
           onValueChange={(val) => {
-            setSourceWarehouseId(val ?? "");
+            const newSource = val ?? "";
+            setSourceWarehouseId(newSource);
+            if (destWarehouseId === newSource) {
+              setDestWarehouseId("");
+            }
             setFieldErrors((prev) => {
               const next = { ...prev };
               delete next.sourceWarehouseId;
+              delete next.destWarehouseId;
               return next;
             });
           }}

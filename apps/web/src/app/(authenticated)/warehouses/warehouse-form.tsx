@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormDialog } from "@/components/shared/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,13 +26,18 @@ export function WarehouseForm({
   const [address, setAddress] = useState(warehouse?.address ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
+  const [prevWarehouse, setPrevWarehouse] = useState(warehouse);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (warehouse !== prevWarehouse || open !== prevOpen) {
+    setPrevWarehouse(warehouse);
+    setPrevOpen(open);
     if (open) {
       setName(warehouse?.name ?? "");
       setAddress(warehouse?.address ?? "");
       setErrors({});
     }
-  }, [open, warehouse]);
+  }
 
   function validate(): boolean {
     const next: Record<string, string> = {};
