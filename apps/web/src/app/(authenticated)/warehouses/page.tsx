@@ -9,6 +9,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { WarehouseForm } from "./warehouse-form";
 import {
@@ -118,15 +119,10 @@ export default function WarehousesPage() {
       header: "Status",
       sortable: true,
       cell: (row) => (
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-            row.isActive
-              ? "bg-emerald-500/10 text-emerald-500"
-              : "bg-zinc-500/10 text-zinc-400"
-          }`}
-        >
-          {row.isActive ? "Active" : "Inactive"}
-        </span>
+        <StatusBadge
+          label={row.isActive ? "Active" : "Inactive"}
+          variant={row.isActive ? "success" : "destructive"}
+        />
       ),
     },
     {

@@ -50,6 +50,8 @@ export default function UsersPage() {
 
   if (!isAuthenticated) return null;
 
+  const isAdmin = currentUser?.role === "ADMIN";
+
   function handleCreate() {
     setEditingUser(null);
     setFormOpen(true);
@@ -156,35 +158,39 @@ export default function UsersPage() {
         </span>
       ),
     },
-    {
-      key: "actions",
-      header: "",
-      cell: (row) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleEdit(row as unknown as User)}
-            title="Edit user"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDeactivatePrompt(row as unknown as User)}
-            title={row.isActive ? "Deactivate user" : "Reactivate user"}
-            disabled={row.id === currentUser?.id}
-          >
-            {row.isActive ? (
-              <ToggleRight className="size-4 text-success" />
-            ) : (
-              <ToggleLeft className="size-4 text-destructive" />
-            )}
-          </Button>
-        </div>
-      ),
-    },
+    ...(isAdmin
+      ? [
+          {
+            key: "actions",
+            header: "",
+            cell: (row: User & Record<string, unknown>) => (
+              <div className="flex items-center justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEdit(row as unknown as User)}
+                  title="Edit user"
+                >
+                  <Pencil className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeactivatePrompt(row as unknown as User)}
+                  title={row.isActive ? "Deactivate user" : "Reactivate user"}
+                  disabled={row.id === currentUser?.id}
+                >
+                  {row.isActive ? (
+                    <ToggleRight className="size-4 text-success" />
+                  ) : (
+                    <ToggleLeft className="size-4 text-destructive" />
+                  )}
+                </Button>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const tableData = users.map((u) => ({ ...u })) as (User & Record<string, unknown>)[];
@@ -194,8 +200,8 @@ export default function UsersPage() {
       <PageHeader
         title="User Management"
         description="Create, edit, and manage user accounts and roles."
-        actionLabel="Add User"
-        onAction={handleCreate}
+        actionLabel={isAdmin ? "Add User" : undefined}
+        onAction={isAdmin ? handleCreate : undefined}
       />
 
       <DataTable
