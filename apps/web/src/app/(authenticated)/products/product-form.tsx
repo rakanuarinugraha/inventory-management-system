@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FormDialog } from "@/components/shared/form-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,8 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RotateCcw } from "lucide-react";
 import type { Product, CreateProductInput, UpdateProductInput } from "@/types/product";
 import type { Category } from "@/types/category";
+
+interface SkuCollisionError {
+  inactiveProductId: string;
+  inactiveProductName: string;
+}
 
 interface ProductFormProps {
   open: boolean;
@@ -21,6 +28,9 @@ interface ProductFormProps {
   categories: Category[];
   onSubmit: (data: CreateProductInput | { id: string; data: UpdateProductInput }) => void;
   isSubmitting: boolean;
+  skuCollisionError?: SkuCollisionError | null;
+  onReactivateFromForm?: () => void;
+  isReactivating?: boolean;
 }
 
 export function ProductForm({
@@ -30,6 +40,9 @@ export function ProductForm({
   categories,
   onSubmit,
   isSubmitting,
+  skuCollisionError,
+  onReactivateFromForm,
+  isReactivating,
 }: ProductFormProps) {
   const isEdit = !!product;
   const [sku, setSku] = useState(product?.sku ?? "");
@@ -107,6 +120,25 @@ export function ProductForm({
         />
         {errors.sku && <p className="text-xs text-destructive">{errors.sku}</p>}
       </div>
+
+      {skuCollisionError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+          <p className="text-sm text-destructive font-medium">
+            This SKU belongs to an inactive product: &quot;{skuCollisionError.inactiveProductName}&quot;
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onReactivateFromForm}
+            disabled={isReactivating}
+            className="gap-1.5"
+          >
+            <RotateCcw className="size-3.5" />
+            {isReactivating ? "Reactivating..." : "Reactivate instead?"}
+          </Button>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="product-name">Name</Label>

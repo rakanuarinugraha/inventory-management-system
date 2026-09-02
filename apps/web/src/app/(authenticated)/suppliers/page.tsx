@@ -5,17 +5,21 @@ import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, RotateCcw } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { StatusFilter, type StatusFilterValue } from "@/components/shared/status-filter";
 import { Button } from "@/components/ui/button";
 import { SupplierForm } from "./supplier-form";
 import {
   useSuppliers,
   useCreateSupplier,
   useUpdateSupplier,
-  useDeleteSupplier,
+  useDeactivateSupplier,
+  useReactivateSupplier,
+  type SupplierStatusFilter,
 } from "@/hooks/use-suppliers";
 import type { Supplier, CreateSupplierInput, UpdateSupplierInput } from "@/types/supplier";
 
@@ -27,15 +31,18 @@ export default function SuppliersPage() {
     if (!isAuthenticated) router.replace("/login");
   }, [isAuthenticated, router]);
 
-  const { data: suppliers = [], isLoading } = useSuppliers();
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("active");
+  const { data: suppliers = [], isLoading } = useSuppliers(statusFilter as SupplierStatusFilter);
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
-  const deleteSupplier = useDeleteSupplier();
+  const deactivateSupplier = useDeactivateSupplier();
+  const reactivateSupplier = useReactivateSupplier();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetSupplier, setTargetSupplier] = useState<Supplier | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"deactivate" | "reactivate">("deactivate");
 
   if (!isAuthenticated) return null;
 
@@ -52,23 +59,44 @@ export default function SuppliersPage() {
     setFormOpen(true);
   }
 
-  function handleDeletePrompt(supplier: Supplier) {
+  function handleDeactivatePrompt(supplier: Supplier) {
     setTargetSupplier(supplier);
+    setConfirmAction("deactivate");
     setConfirmOpen(true);
   }
 
-  function handleConfirmDelete() {
+  function handleReactivatePrompt(supplier: Supplier) {
+    setTargetSupplier(supplier);
+    setConfirmAction("reactivate");
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmAction() {
     if (!targetSupplier) return;
-    deleteSupplier.mutate(targetSupplier.id, {
-      onSuccess: () => {
-        toast.success(`Supplier "${targetSupplier.name}" has been deleted.`);
-        setConfirmOpen(false);
-        setTargetSupplier(null);
-      },
-      onError: (err) => {
-        toast.error(err.message || "Failed to delete supplier.");
-      },
-    });
+
+    if (confirmAction === "deactivate") {
+      deactivateSupplier.mutate(targetSupplier.id, {
+        onSuccess: () => {
+          toast.success(`Supplier "${targetSupplier.name}" has been deactivated.`);
+          setConfirmOpen(false);
+          setTargetSupplier(null);
+        },
+        onError: (err) => {
+          toast.error(err.message || "Failed to deactivate supplier.");
+        },
+      });
+    } else {
+      reactivateSupplier.mutate(targetSupplier.id, {
+        onSuccess: () => {
+          toast.success(`Supplier "${targetSupplier.name}" has been reactivated.`);
+          setConfirmOpen(false);
+          setTargetSupplier(null);
+        },
+        onError: (err) => {
+          toast.error(err.message || "Failed to reactivate supplier.");
+        },
+      });
+    }
   }
 
   function handleFormSubmit(data: CreateSupplierInput | { id: string; data: UpdateSupplierInput }) {
@@ -130,33 +158,62 @@ export default function SuppliersPage() {
         <span className="text-sm text-muted-foreground">{(row.address as string) || "—"}</span>
       ),
     },
+    {
+      key: "isActive",
+      header: "Status",
+      sortable: true,
+      cell: (row) => (
+        <StatusBadge
+          label={row.isActive ? "Active" : "Inactive"}
+          variant={row.isActive ? "success" : "destructive"}
+        />
+      ),
+    },
     ...(canManage
       ? [
           {
             key: "actions",
             header: "",
-            cell: (row: Supplier & Record<string, unknown>) => (
-              <div className="flex items-center justify-end gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEdit(row as unknown as Supplier)}
-                  title="Edit supplier"
-                >
-                  <Pencil className="size-4" />
-                </Button>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePrompt(row as unknown as Supplier)}
-                    title="Delete supplier"
-                  >
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
-                )}
-              </div>
-            ),
+            cell: (row: Supplier & Record<string, unknown>) => {
+              const isActive = row.isActive as boolean;
+              return (
+                <div className="flex items-center justify-end gap-1">
+                  {isActive ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(row as unknown as Supplier)}
+                        title="Edit supplier"
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeactivatePrompt(row as unknown as Supplier)}
+                          title="Deactivate supplier"
+                        >
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleReactivatePrompt(row as unknown as Supplier)}
+                        title="Reactivate supplier"
+                      >
+                        <RotateCcw className="size-4 text-primary" />
+                      </Button>
+                    )
+                  )}
+                </div>
+              );
+            },
           },
         ]
       : []),
@@ -173,11 +230,19 @@ export default function SuppliersPage() {
         onAction={canManage ? handleCreate : undefined}
       />
 
+      <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+
       <DataTable
         columns={columns}
         data={tableData}
         isLoading={isLoading}
-        emptyMessage="No suppliers found."
+        emptyMessage={
+          statusFilter === "active"
+            ? "No active suppliers found."
+            : statusFilter === "inactive"
+              ? "No inactive suppliers found."
+              : "No suppliers found."
+        }
       />
 
       <SupplierForm
@@ -197,12 +262,16 @@ export default function SuppliersPage() {
           setConfirmOpen(open);
           if (!open) setTargetSupplier(null);
         }}
-        title="Delete Supplier"
-        description={`Are you sure you want to delete "${targetSupplier?.name}"? This action cannot be undone.`}
-        onConfirm={handleConfirmDelete}
-        confirmLabel="Delete"
-        variant="destructive"
-        isSubmitting={deleteSupplier.isPending}
+        title={confirmAction === "deactivate" ? "Deactivate Supplier" : "Reactivate Supplier"}
+        description={
+          confirmAction === "deactivate"
+            ? `Are you sure you want to deactivate "${targetSupplier?.name}"? This supplier will no longer appear in the supplier list but can be reactivated later.`
+            : `Are you sure you want to reactivate "${targetSupplier?.name}"? It will reappear in the active supplier list.`
+        }
+        onConfirm={handleConfirmAction}
+        confirmLabel={confirmAction === "deactivate" ? "Deactivate" : "Reactivate"}
+        variant={confirmAction === "deactivate" ? "destructive" : "default"}
+        isSubmitting={deactivateSupplier.isPending || reactivateSupplier.isPending}
       />
     </div>
   );

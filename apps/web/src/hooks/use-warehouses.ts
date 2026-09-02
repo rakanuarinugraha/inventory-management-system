@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import type { Warehouse, CreateWarehouseInput, UpdateWarehouseInput } from "@/types/warehouse";
 
+export type WarehouseStatusFilter = "active" | "inactive" | "all";
+
 interface WarehousesResponse {
   warehouses: Warehouse[];
 }
@@ -11,10 +13,11 @@ interface WarehouseResponse {
   warehouse: Warehouse;
 }
 
-export function useWarehouses() {
+export function useWarehouses(status: WarehouseStatusFilter = "active") {
   return useQuery<Warehouse[], ApiError>({
-    queryKey: ["warehouses"],
-    queryFn: () => api.get<WarehousesResponse>("/api/warehouses").then((res) => res.warehouses),
+    queryKey: ["warehouses", status],
+    queryFn: () =>
+      api.get<WarehousesResponse>(`/api/warehouses?status=${status}`).then((res) => res.warehouses),
   });
 }
 
@@ -38,10 +41,20 @@ export function useUpdateWarehouse() {
   });
 }
 
-export function useDeleteWarehouse() {
+export function useDeactivateWarehouse() {
   const queryClient = useQueryClient();
-  return useMutation<{ message: string }, ApiError, string>({
-    mutationFn: (id) => api.delete<{ message: string }>(`/api/warehouses/${id}`),
+  return useMutation<WarehouseResponse, ApiError, string>({
+    mutationFn: (id) => api.patch<WarehouseResponse>(`/api/warehouses/${id}/deactivate`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["warehouses"] });
+    },
+  });
+}
+
+export function useReactivateWarehouse() {
+  const queryClient = useQueryClient();
+  return useMutation<WarehouseResponse, ApiError, string>({
+    mutationFn: (id) => api.patch<WarehouseResponse>(`/api/warehouses/${id}/reactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["warehouses"] });
     },

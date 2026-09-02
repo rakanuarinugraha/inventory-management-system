@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import type { Product, CreateProductInput, UpdateProductInput } from "@/types/product";
 
+export type ProductStatusFilter = "active" | "inactive" | "all";
+
 interface ProductsResponse {
   products: Product[];
 }
@@ -11,10 +13,11 @@ interface ProductResponse {
   product: Product;
 }
 
-export function useProducts() {
+export function useProducts(status: ProductStatusFilter = "active") {
   return useQuery<Product[], ApiError>({
-    queryKey: ["products"],
-    queryFn: () => api.get<ProductsResponse>("/api/products").then((res) => res.products),
+    queryKey: ["products", status],
+    queryFn: () =>
+      api.get<ProductsResponse>(`/api/products?status=${status}`).then((res) => res.products),
   });
 }
 
@@ -42,6 +45,16 @@ export function useDeleteProduct() {
   const queryClient = useQueryClient();
   return useMutation<{ message: string }, ApiError, string>({
     mutationFn: (id) => api.delete<{ message: string }>(`/api/products/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useReactivateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation<ProductResponse, ApiError, string>({
+    mutationFn: (id) => api.patch<ProductResponse>(`/api/products/${id}/reactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },

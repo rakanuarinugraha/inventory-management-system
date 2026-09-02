@@ -5,18 +5,21 @@ import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, RotateCcw } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { StatusFilter, type StatusFilterValue } from "@/components/shared/status-filter";
 import { Button } from "@/components/ui/button";
 import { WarehouseForm } from "./warehouse-form";
 import {
   useWarehouses,
   useCreateWarehouse,
   useUpdateWarehouse,
-  useDeleteWarehouse,
+  useDeactivateWarehouse,
+  useReactivateWarehouse,
+  type WarehouseStatusFilter,
 } from "@/hooks/use-warehouses";
 import type { Warehouse, CreateWarehouseInput, UpdateWarehouseInput } from "@/types/warehouse";
 
@@ -28,15 +31,18 @@ export default function WarehousesPage() {
     if (!isAuthenticated) router.replace("/login");
   }, [isAuthenticated, router]);
 
-  const { data: warehouses = [], isLoading } = useWarehouses();
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("active");
+  const { data: warehouses = [], isLoading } = useWarehouses(statusFilter as WarehouseStatusFilter);
   const createWarehouse = useCreateWarehouse();
   const updateWarehouse = useUpdateWarehouse();
-  const deleteWarehouse = useDeleteWarehouse();
+  const deactivateWarehouse = useDeactivateWarehouse();
+  const reactivateWarehouse = useReactivateWarehouse();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetWarehouse, setTargetWarehouse] = useState<Warehouse | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"deactivate" | "reactivate">("deactivate");
 
   if (!isAuthenticated) return null;
 
@@ -52,23 +58,44 @@ export default function WarehousesPage() {
     setFormOpen(true);
   }
 
-  function handleDeletePrompt(warehouse: Warehouse) {
+  function handleDeactivatePrompt(warehouse: Warehouse) {
     setTargetWarehouse(warehouse);
+    setConfirmAction("deactivate");
     setConfirmOpen(true);
   }
 
-  function handleConfirmDelete() {
+  function handleReactivatePrompt(warehouse: Warehouse) {
+    setTargetWarehouse(warehouse);
+    setConfirmAction("reactivate");
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmAction() {
     if (!targetWarehouse) return;
-    deleteWarehouse.mutate(targetWarehouse.id, {
-      onSuccess: () => {
-        toast.success(`Warehouse "${targetWarehouse.name}" has been deleted.`);
-        setConfirmOpen(false);
-        setTargetWarehouse(null);
-      },
-      onError: (err) => {
-        toast.error(err.message || "Failed to delete warehouse.");
-      },
-    });
+
+    if (confirmAction === "deactivate") {
+      deactivateWarehouse.mutate(targetWarehouse.id, {
+        onSuccess: () => {
+          toast.success(`Warehouse "${targetWarehouse.name}" has been deactivated.`);
+          setConfirmOpen(false);
+          setTargetWarehouse(null);
+        },
+        onError: (err) => {
+          toast.error(err.message || "Failed to deactivate warehouse.");
+        },
+      });
+    } else {
+      reactivateWarehouse.mutate(targetWarehouse.id, {
+        onSuccess: () => {
+          toast.success(`Warehouse "${targetWarehouse.name}" has been reactivated.`);
+          setConfirmOpen(false);
+          setTargetWarehouse(null);
+        },
+        onError: (err) => {
+          toast.error(err.message || "Failed to reactivate warehouse.");
+        },
+      });
+    }
   }
 
   function handleFormSubmit(data: CreateWarehouseInput | { id: string; data: UpdateWarehouseInput }) {
@@ -140,26 +167,42 @@ export default function WarehousesPage() {
           {
             key: "actions",
             header: "",
-            cell: (row: Warehouse & Record<string, unknown>) => (
-              <div className="flex items-center justify-end gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEdit(row as unknown as Warehouse)}
-                  title="Edit warehouse"
-                >
-                  <Pencil className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeletePrompt(row as unknown as Warehouse)}
-                  title="Delete warehouse"
-                >
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
-              </div>
-            ),
+            cell: (row: Warehouse & Record<string, unknown>) => {
+              const isActive = row.isActive as boolean;
+              return (
+                <div className="flex items-center justify-end gap-1">
+                  {isActive ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(row as unknown as Warehouse)}
+                        title="Edit warehouse"
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeactivatePrompt(row as unknown as Warehouse)}
+                        title="Deactivate warehouse"
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleReactivatePrompt(row as unknown as Warehouse)}
+                      title="Reactivate warehouse"
+                    >
+                      <RotateCcw className="size-4 text-primary" />
+                    </Button>
+                  )}
+                </div>
+              );
+            },
           },
         ]
       : []),
@@ -176,11 +219,19 @@ export default function WarehousesPage() {
         onAction={isAdmin ? handleCreate : undefined}
       />
 
+      <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+
       <DataTable
         columns={columns}
         data={tableData}
         isLoading={isLoading}
-        emptyMessage="No warehouses found."
+        emptyMessage={
+          statusFilter === "active"
+            ? "No active warehouses found."
+            : statusFilter === "inactive"
+              ? "No inactive warehouses found."
+              : "No warehouses found."
+        }
       />
 
       <WarehouseForm
@@ -200,12 +251,16 @@ export default function WarehousesPage() {
           setConfirmOpen(open);
           if (!open) setTargetWarehouse(null);
         }}
-        title="Delete Warehouse"
-        description={`Are you sure you want to delete "${targetWarehouse?.name}"? This action cannot be undone.`}
-        onConfirm={handleConfirmDelete}
-        confirmLabel="Delete"
-        variant="destructive"
-        isSubmitting={deleteWarehouse.isPending}
+        title={confirmAction === "deactivate" ? "Deactivate Warehouse" : "Reactivate Warehouse"}
+        description={
+          confirmAction === "deactivate"
+            ? `Are you sure you want to deactivate "${targetWarehouse?.name}"? This warehouse will no longer appear in the warehouse list but can be reactivated later.`
+            : `Are you sure you want to reactivate "${targetWarehouse?.name}"? It will reappear in the active warehouse list.`
+        }
+        onConfirm={handleConfirmAction}
+        confirmLabel={confirmAction === "deactivate" ? "Deactivate" : "Reactivate"}
+        variant={confirmAction === "deactivate" ? "destructive" : "default"}
+        isSubmitting={deactivateWarehouse.isPending || reactivateWarehouse.isPending}
       />
     </div>
   );

@@ -4,6 +4,7 @@ export interface Supplier {
   contactEmail: string | null;
   contactPhone: string | null;
   address: string | null;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

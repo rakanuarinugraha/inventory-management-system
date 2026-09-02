@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import type { Supplier, CreateSupplierInput, UpdateSupplierInput } from "@/types/supplier";
 
+export type SupplierStatusFilter = "active" | "inactive" | "all";
+
 interface SuppliersResponse {
   suppliers: Supplier[];
 }
@@ -11,10 +13,11 @@ interface SupplierResponse {
   supplier: Supplier;
 }
 
-export function useSuppliers() {
+export function useSuppliers(status: SupplierStatusFilter = "active") {
   return useQuery<Supplier[], ApiError>({
-    queryKey: ["suppliers"],
-    queryFn: () => api.get<SuppliersResponse>("/api/suppliers").then((res) => res.suppliers),
+    queryKey: ["suppliers", status],
+    queryFn: () =>
+      api.get<SuppliersResponse>(`/api/suppliers?status=${status}`).then((res) => res.suppliers),
   });
 }
 
@@ -38,10 +41,20 @@ export function useUpdateSupplier() {
   });
 }
 
-export function useDeleteSupplier() {
+export function useDeactivateSupplier() {
   const queryClient = useQueryClient();
-  return useMutation<{ message: string }, ApiError, string>({
-    mutationFn: (id) => api.delete<{ message: string }>(`/api/suppliers/${id}`),
+  return useMutation<SupplierResponse, ApiError, string>({
+    mutationFn: (id) => api.patch<SupplierResponse>(`/api/suppliers/${id}/deactivate`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    },
+  });
+}
+
+export function useReactivateSupplier() {
+  const queryClient = useQueryClient();
+  return useMutation<SupplierResponse, ApiError, string>({
+    mutationFn: (id) => api.patch<SupplierResponse>(`/api/suppliers/${id}/reactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
     },

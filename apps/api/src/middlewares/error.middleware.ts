@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 interface AppError extends Error {
   statusCode?: number;
+  details?: Record<string, unknown>;
 }
 
 export function errorHandler(
@@ -15,5 +16,10 @@ export function errorHandler(
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
 
-  res.status(statusCode).json({ message });
+  const body: Record<string, unknown> = { message };
+  if (err.details) {
+    body.details = err.details;
+  }
+
+  res.status(statusCode).json(body);
 }
