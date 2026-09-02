@@ -12,6 +12,7 @@ const pageTitles: Record<string, string> = {
   warehouses: "Warehouses",
   suppliers: "Suppliers",
   "stock-movements": "Stock Movements",
+  "stock-opnames": "Stock Opname",
   "purchase-orders": "Purchase Orders",
   reports: "Reports",
   users: "User Management",
