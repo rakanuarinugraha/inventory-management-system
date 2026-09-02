@@ -31,3 +31,19 @@ export interface PurchaseOrder {
   items: PurchaseOrderItem[];
   creator: { id: string; name: string };
 }
+
+export interface CreatePurchaseOrderItemInput {
+  productId: string;
+  qtyOrdered: number;
+  unitPrice: number;
+}
+
+export interface CreatePurchaseOrderInput {
+  supplierId: string;
+  items: CreatePurchaseOrderItemInput[];
+}
+
+export interface TransitionPOStatusInput {
+  status: "SUBMITTED" | "CANCELLED";
+}
+
